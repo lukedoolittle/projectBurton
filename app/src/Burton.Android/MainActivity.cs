@@ -2,9 +2,9 @@
 using Android.Widget;
 using Android.OS;
 
-namespace ProjectBurton.Android
+namespace Burton.Android
 {
-    [Activity(Label = "ProjectBurton.Android", MainLauncher = true)]
+    [Activity(Label = "Burton.Android", MainLauncher = true)]
     public class MainActivity : Activity
     {
         protected override void OnCreate(Bundle savedInstanceState)

@@ -55,18 +55,38 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Core" />
     <Reference Include="Mono.Android" />
+    <Reference Include="Tesseract, Version=0.3.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Xamarin.Tesseract.0.3.4\lib\MonoAndroid10\Tesseract.dll</HintPath>
+    </Reference>
+    <Reference Include="Tesseract.Binding.Droid, Version=0.3.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Xamarin.Tesseract.0.3.4\lib\MonoAndroid10\Tesseract.Binding.Droid.dll</HintPath>
+    </Reference>
+    <Reference Include="Tesseract.Droid, Version=0.3.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\..\packages\Xamarin.Tesseract.0.3.4\lib\MonoAndroid10\Tesseract.Droid.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CameraActivity.cs" />
-    <Compile Include="CameraProxy.cs" />
+    <Compile Include="AndroidCameraProxy.cs" />
+    <Compile Include="AndroidSpeechProxy.cs" />
+    <Compile Include="ReadingActivity.cs" />
     <Compile Include="MainActivity.cs" />
     <Compile Include="MainApplication.cs" />
     <Compile Include="Resources\Resource.Designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="TinyIoC.cs" />
   </ItemGroup>
   <ItemGroup>
     <AndroidAsset Include="Assets\tessdata\eng.traineddata" />
+    <AndroidAsset Include="Assets\tessdata\eng.cube.bigrams" />
+    <AndroidAsset Include="Assets\tessdata\eng.cube.fold" />
+    <AndroidAsset Include="Assets\tessdata\eng.cube.lm" />
+    <AndroidAsset Include="Assets\tessdata\eng.cube.nn" />
+    <AndroidAsset Include="Assets\tessdata\eng.cube.params" />
+    <AndroidAsset Include="Assets\tessdata\eng.cube.size" />
+    <AndroidAsset Include="Assets\tessdata\eng.cube.word-freq" />
+    <AndroidAsset Include="Assets\tessdata\eng.tesseract_cube.nn" />
+    <None Include="packages.config" />
     <None Include="Resources\AboutResources.txt" />
     <None Include="Properties\AndroidManifest.xml" />
     <None Include="Assets\AboutAssets.txt" />

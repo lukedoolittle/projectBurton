@@ -2,6 +2,9 @@
 using Android.App;
 using Android.OS;
 using Android.Runtime;
+using Tesseract;
+using Tesseract.Droid;
+using TinyIoC;
 
 namespace Burton.Android
 {
@@ -18,6 +21,11 @@ namespace Burton.Android
 
         public override void OnCreate()
         {
+            var container = TinyIoCContainer.Current;
+            container.Register<ITesseractApi>((cont, parameters) => new TesseractApi(
+                ApplicationContext, 
+                AssetsDeployment.OncePerInitialization));
+
             base.OnCreate();
             RegisterActivityLifecycleCallbacks(this);
         }

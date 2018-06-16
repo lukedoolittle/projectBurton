@@ -4,7 +4,7 @@ using Android.Speech.Tts;
 
 namespace Burton.Android
 {
-    public class AndroidSpeechProxy
+    public class AndroidTextToSpeechProxy
     {
         private readonly ReadingActivity _speechActivity;
         private readonly float _pitch;
@@ -36,7 +36,7 @@ namespace Burton.Android
             }
         }
 
-        public AndroidSpeechProxy(ReadingActivity speechActivity) :
+        public AndroidTextToSpeechProxy(ReadingActivity speechActivity) :
             this(speechActivity, 
                 Java.Util.Locale.English, 
                 1.0f, 
@@ -45,7 +45,7 @@ namespace Burton.Android
         {
         }
 
-        public AndroidSpeechProxy(
+        public AndroidTextToSpeechProxy(
             ReadingActivity speechActivity,
             Java.Util.Locale language,
             float pitch,
@@ -83,6 +83,7 @@ namespace Burton.Android
                 null);
 #pragma warning restore 618
         }
+
         public void OnInit(OperationResult status)
         {
             //only the default language is supported at current

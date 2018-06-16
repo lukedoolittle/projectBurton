@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using Burton.Core.Common;
 using Tesseract;
 
@@ -34,7 +32,7 @@ namespace Burton.Core.Infrastructure
             //This should also give confidence and location so use that
             if (await _tesseract.SetImage(e.Image))
             {
-                if (_tesseract.Text != null)
+                if (!string.IsNullOrEmpty(_tesseract.Text))
                 {
                     CapturedText?.Invoke(
                         this,
@@ -47,13 +45,12 @@ namespace Burton.Core.Infrastructure
             }
         }
 
-        private static string ParseWordResults(IEnumerable<Result> results)
+        private static List<WordOnPage> ParseWordResults(IEnumerable<Result> results)
         {
-            var normalizedText = string.Join(
-                " ",
-                results.Where(r => r.Confidence >= 0.85f).Select(r => r.Text.ToLower()));
-
-            return normalizedText;
+            return results
+                .Where(r => r.Confidence >= 0.85f && r.Text != ".")
+                .Select(r => new WordOnPage { Word = r.Text.ToLower(), Location = r.Box })
+                .ToList();
         }
     }
 }

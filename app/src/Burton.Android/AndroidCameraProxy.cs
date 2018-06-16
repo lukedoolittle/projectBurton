@@ -55,7 +55,7 @@ namespace Burton.Android
 
         public AndroidCameraProxy(
             ReadingActivity activity,
-            int previewFrequencyInFrames = 100)
+            int previewFrequencyInFrames)
         {
             _activity = activity ?? throw new ArgumentNullException(nameof(activity));
             _counter = new ThreadSafeCounter();

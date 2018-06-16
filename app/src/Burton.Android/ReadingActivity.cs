@@ -10,6 +10,7 @@ using Android.Views;
 using Burton.Core.Infrastructure;
 using Tesseract;
 using TinyIoC;
+using Result = Android.App.Result;
 
 namespace Burton.Android
 {
@@ -21,13 +22,15 @@ namespace Burton.Android
     {
         private SurfaceTexture _surface;
         protected readonly AndroidCameraProxy _camera;
-        protected readonly AndroidSpeechProxy _speech;
+        protected readonly AndroidTextToSpeechProxy _textToSpeech;
+        protected readonly AndroidSpeechToTextProxy _speechToText;
         protected readonly OpticalCharacterRecognition _ocr;
 
         public ReadingActivity()
         {
-            _camera = new AndroidCameraProxy(this);
-            _speech = new AndroidSpeechProxy(this);
+            _camera = new AndroidCameraProxy(this, 25);
+            _textToSpeech = new AndroidTextToSpeechProxy(this);
+            //_speechToText = new AndroidSpeechToTextProxy(this);
             _ocr = new OpticalCharacterRecognition(TinyIoCContainer.Current.Resolve<ITesseractApi>());
         }
 
@@ -50,7 +53,7 @@ namespace Burton.Android
 
         public Task RequestVoice()
         {
-            return _speech.InitializeLanguage();
+            return _textToSpeech.InitializeLanguage();
         }
 
         public override void OnRequestPermissionsResult(
@@ -98,7 +101,7 @@ namespace Burton.Android
 
         public void OnInit(OperationResult status)
         {
-            _speech.OnInit(status);
+            _textToSpeech.OnInit(status);
         }
 
         #endregion IOnInitListener

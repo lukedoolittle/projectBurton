@@ -67,7 +67,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AndroidCameraProxy.cs" />
-    <Compile Include="AndroidSpeechProxy.cs" />
+    <Compile Include="AndroidTextToSpeechProxy.cs" />
+    <Compile Include="AndroidSpeechToTextProxy.cs" />
     <Compile Include="ReadingActivity.cs" />
     <Compile Include="MainActivity.cs" />
     <Compile Include="MainApplication.cs" />

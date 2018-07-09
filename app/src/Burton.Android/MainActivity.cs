@@ -1,8 +1,11 @@
-﻿using Android.App;
+﻿using System;
+using Android.App;
+using Android.Content;
 using Android.Content.PM;
 using Android.Graphics;
 using Android.Widget;
 using Android.OS;
+using Android.Speech;
 using Android.Views;
 using Tesseract;
 
@@ -13,24 +16,27 @@ namespace Burton.Android
     {
         private TextureView _textureView;
         private SurfaceView _surfaceView;
-        private ISurfaceHolder _holder;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
 
-            // Set our view from the "main" layout resource
+            string rec = global::Android.Content.PM.PackageManager.FeatureMicrophone;
+
+            if (rec != "android.hardware.microphone")
+            {
+                throw new Exception("No microphone to record speech");
+            }
+            //TODO: need to get permissions to the microphone here
+
             SetContentView(Resource.Layout.Main);
 
             _textureView = (TextureView)FindViewById(Resource.Id.textureView);
             _textureView.SurfaceTextureListener = this;
 
             _surfaceView = (SurfaceView)FindViewById(Resource.Id.surfaceview);
-            //set to top layer
             _surfaceView.SetZOrderOnTop(true);
-            //set the background to transparent
             _surfaceView.Holder.SetFormat(Format.Transparent);
-            _holder = _surfaceView.Holder;
         }
 
         public override async void OnSurfaceTextureAvailable(
@@ -49,18 +55,47 @@ namespace Burton.Android
             await RequestCameraPreview();
             RequestVoice();
 
-            _camera.GeneratedPreviewImage += _ocr.CameraGeneratedPreviewImage;
+
+            //_speechToText.StartListening();
+
+            //var voiceIntent = new Intent(RecognizerIntent.ActionRecognizeSpeech);
+            //voiceIntent.PutExtra(RecognizerIntent.ExtraLanguageModel, RecognizerIntent.LanguageModelFreeForm);
+            //voiceIntent.PutExtra(RecognizerIntent.ExtraSpeechInputCompleteSilenceLengthMillis, 1500);
+            //voiceIntent.PutExtra(RecognizerIntent.ExtraSpeechInputPossiblyCompleteSilenceLengthMillis, 1500);
+            //voiceIntent.PutExtra(RecognizerIntent.ExtraSpeechInputMinimumLengthMillis, 15000);
+            //voiceIntent.PutExtra(RecognizerIntent.ExtraMaxResults, 1);
+            //voiceIntent.PutExtra(RecognizerIntent.ExtraLanguage, Java.Util.Locale.Default);
+            //StartActivityForResult(voiceIntent, 10);
 
 
-            _ocr.CapturedText += (sender, args) =>
-            {
-                foreach (var result in args.Text)
-                {
-                    DrawWordBoundingBox(result.Location);
-                }
-                _textToSpeech.Speak("Great Job");
-            };
+            //_ocr.CapturedText += (sender, args) =>
+            //{
+            //    foreach (var result in args.Words)
+            //    {
+            //        DrawWordBoundingBox(result.Location);
+            //    }
+            //    _textToSpeech.Speak("Great Job");
+            //};
         }
+
+
+        //protected override void OnActivityResult(int requestCode, global::Android.App.Result resultVal, Intent data)
+        //{
+        //    if (requestCode == 10)
+        //    {
+        //        if (resultVal == global::Android.App.Result.Ok)
+        //        {
+        //            var matches = data.GetStringArrayListExtra(RecognizerIntent.ExtraResults);
+        //            if (matches.Count != 0)
+        //            {
+        //                object a = null;
+        //            }
+        //        }
+
+        //        //base.OnActivityResult(requestCode, resultVal, data);
+        //    }
+        //}
+
 
 
         private void DrawWordBoundingBox(Rectangle resultLocation)
@@ -72,7 +107,7 @@ namespace Burton.Android
             mpaint.StrokeWidth = 2f;
 
             //draw
-            Canvas canvas = _holder.LockCanvas();
+            Canvas canvas = _surfaceView.Holder.LockCanvas();
             //clear the paint of last time
             canvas.DrawColor(Color.Transparent, PorterDuff.Mode.Clear);
             //draw a new one, set your ball's position to the rect here
@@ -82,12 +117,7 @@ namespace Burton.Android
                 (int)resultLocation.Right, 
                 (int)resultLocation.Bottom);
             canvas.DrawRect(r, mpaint);
-            _holder.UnlockCanvasAndPost(canvas);
-        }
-
-        private void FillInBox()
-        {
-
+            _surfaceView.Holder.UnlockCanvasAndPost(canvas);
         }
 
     }

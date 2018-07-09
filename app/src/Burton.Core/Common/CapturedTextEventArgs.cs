@@ -5,6 +5,6 @@ namespace Burton.Core.Common
 {
     public class CapturedTextEventArgs : EventArgs
     {
-        public List<WordOnPage> Text { get; set; }
+        public List<WordOnPage> Words { get; set; }
     }
 }

@@ -1,4 +1,6 @@
-﻿using Android.Content;
+﻿using System;
+using Android.App;
+using Android.Content;
 using Android.OS;
 using Android.Runtime;
 using Android.Speech;
@@ -26,10 +28,13 @@ namespace Burton.Android
             _speech.SetRecognitionListener(this);
             _speechIntent = new Intent(RecognizerIntent.ActionRecognizeSpeech);
             _speechIntent.PutExtra(RecognizerIntent.ExtraLanguageModel, RecognizerIntent.LanguageModelFreeForm);
-            _speechIntent.PutExtra(RecognizerIntent.ActionRecognizeSpeech, RecognizerIntent.ExtraPreferOffline);
-            _speechIntent.PutExtra(RecognizerIntent.ExtraSpeechInputCompleteSilenceLengthMillis, 1000);
-            _speechIntent.PutExtra(RecognizerIntent.ExtraSpeechInputPossiblyCompleteSilenceLengthMillis, 1000);
-            _speechIntent.PutExtra(RecognizerIntent.ExtraSpeechInputMinimumLengthMillis, 1500);
+            //_speechIntent.PutExtra(RecognizerIntent.ActionRecognizeSpeech, RecognizerIntent.ExtraPreferOffline);
+            _speechIntent.PutExtra(RecognizerIntent.ExtraSpeechInputCompleteSilenceLengthMillis, 1500);
+            _speechIntent.PutExtra(RecognizerIntent.ExtraSpeechInputPossiblyCompleteSilenceLengthMillis, 1500);
+            _speechIntent.PutExtra(RecognizerIntent.ExtraSpeechInputMinimumLengthMillis, 15000);
+            _speechIntent.PutExtra(RecognizerIntent.ExtraMaxResults, 1);
+            _speechIntent.PutExtra(RecognizerIntent.ExtraLanguage, Java.Util.Locale.Default);
+            _speechIntent.PutExtra(RecognizerIntent.ExtraCallingPackage, Application.Context.PackageName);
         }
 
         void Restart()
@@ -38,9 +43,14 @@ namespace Burton.Android
             _speech = SpeechRecognizer.CreateSpeechRecognizer(_readingActivity);
             _speech.SetRecognitionListener(this);
             _speechIntent = new Intent(RecognizerIntent.ActionRecognizeSpeech);
-            _speechIntent.PutExtra(RecognizerIntent.ExtraSpeechInputCompleteSilenceLengthMillis, 1000);
-            _speechIntent.PutExtra(RecognizerIntent.ExtraSpeechInputPossiblyCompleteSilenceLengthMillis, 1000);
-            _speechIntent.PutExtra(RecognizerIntent.ExtraSpeechInputMinimumLengthMillis, 1500);
+            _speechIntent.PutExtra(RecognizerIntent.ExtraLanguageModel, RecognizerIntent.LanguageModelFreeForm);
+            //_speechIntent.PutExtra(RecognizerIntent.ActionRecognizeSpeech, RecognizerIntent.ExtraPreferOffline);
+            _speechIntent.PutExtra(RecognizerIntent.ExtraSpeechInputCompleteSilenceLengthMillis, 1500);
+            _speechIntent.PutExtra(RecognizerIntent.ExtraSpeechInputPossiblyCompleteSilenceLengthMillis, 1500);
+            _speechIntent.PutExtra(RecognizerIntent.ExtraSpeechInputMinimumLengthMillis, 15000);
+            _speechIntent.PutExtra(RecognizerIntent.ExtraMaxResults, 1);
+            _speechIntent.PutExtra(RecognizerIntent.ExtraLanguage, Java.Util.Locale.Default);
+            _speechIntent.PutExtra(RecognizerIntent.ExtraCallingPackage, Application.Context.PackageName);
             StartListening();
         }
 
@@ -56,7 +66,7 @@ namespace Burton.Android
 
         public void OnBeginningOfSpeech()
         {
-
+            object a = null;
         }
 
         public void OnBufferReceived(byte[] buffer)
@@ -65,7 +75,7 @@ namespace Burton.Android
 
         public void OnEndOfSpeech()
         {
-
+            object a = null;
         }
 
         public void OnError([GeneratedEnum] SpeechRecognizerError error)
@@ -76,14 +86,17 @@ namespace Burton.Android
 
         public void OnEvent(int eventType, Bundle @params)
         {
+            object a = null;
         }
 
         public void OnPartialResults(Bundle partialResults)
         {
+            object a = null;
         }
 
         public void OnReadyForSpeech(Bundle @params)
         {
+            object a = null;
         }
 
         public void OnResults(Bundle results)
@@ -107,6 +120,7 @@ namespace Burton.Android
 
         public void OnInit([GeneratedEnum] OperationResult status)
         {
+            object a = null;
         }
     }
 }

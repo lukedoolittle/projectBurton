@@ -30,8 +30,10 @@ namespace Burton.Android
         {
             _camera = new AndroidCameraProxy(this, 25);
             _textToSpeech = new AndroidTextToSpeechProxy(this);
-            //_speechToText = new AndroidSpeechToTextProxy(this);
+            _speechToText = new AndroidSpeechToTextProxy(this);
             _ocr = new OpticalCharacterRecognition(TinyIoCContainer.Current.Resolve<ITesseractApi>());
+
+            _camera.GeneratedPreviewImage += _ocr.CameraGeneratedPreviewImage;
         }
 
         protected override void OnCreate(Bundle savedInstanceState)

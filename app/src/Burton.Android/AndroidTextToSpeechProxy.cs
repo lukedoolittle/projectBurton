@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Android.Speech.Tts;
 
@@ -10,6 +11,7 @@ namespace Burton.Android
         private readonly float _pitch;
         private readonly float _speechRate;
         private readonly string _speechEngine;
+        private readonly string _speakerName;
         private readonly Java.Util.Locale _language;
         private readonly TaskCompletionSource<bool> _languageReadySource = 
             new TaskCompletionSource<bool>();
@@ -41,7 +43,8 @@ namespace Burton.Android
                 Java.Util.Locale.English, 
                 1.0f, 
                 1.0f,
-                "com.google.android.tts")
+                "com.google.android.tts",
+                "en-us-x-sfg#female_2-local")
         {
         }
 
@@ -50,13 +53,15 @@ namespace Burton.Android
             Java.Util.Locale language,
             float pitch,
             float speechRate,
-            string engine)
+            string engine,
+            string speakerName)
         {
             _speechActivity = speechActivity ?? throw new ArgumentNullException(nameof(speechActivity));
             _pitch = pitch;
             _speechRate = speechRate;
             _speechEngine = engine;
             _language = language;
+            _speakerName = speakerName;
         }
 
         public Task InitializeLanguage()
@@ -90,6 +95,7 @@ namespace Burton.Android
             if (_textToSpeech.IsLanguageAvailable(_language) == 
                 LanguageAvailableResult.Available)
             {
+                _textToSpeech.SetVoice(_textToSpeech.Voices.Single(v => v.Name == _speakerName));
                 _languageReadySource.SetResult(true);
             }
         }

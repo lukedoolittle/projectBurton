@@ -29,7 +29,6 @@ namespace Burton.Core.Infrastructure
                 _tesseract.SetBlacklist("/");
             }
 
-            //This should also give confidence and location so use that
             if (await _tesseract.SetImage(e.Image))
             {
                 if (!string.IsNullOrEmpty(_tesseract.Text))
@@ -38,8 +37,7 @@ namespace Burton.Core.Infrastructure
                         this,
                         new CapturedTextEventArgs
                         {
-                            Text = ParseWordResults(_tesseract.Results(PageIteratorLevel.Word))
-
+                            Words = ParseWordResults(_tesseract.Results(PageIteratorLevel.Word))
                         });
                 }
             }

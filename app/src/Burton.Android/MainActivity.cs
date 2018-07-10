@@ -1,11 +1,8 @@
-﻿using System;
-using Android.App;
-using Android.Content;
+﻿using Android.App;
 using Android.Content.PM;
 using Android.Graphics;
 using Android.Widget;
 using Android.OS;
-using Android.Speech;
 using Android.Views;
 using Tesseract;
 
@@ -20,14 +17,6 @@ namespace Burton.Android
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-
-            string rec = global::Android.Content.PM.PackageManager.FeatureMicrophone;
-
-            if (rec != "android.hardware.microphone")
-            {
-                throw new Exception("No microphone to record speech");
-            }
-            //TODO: need to get permissions to the microphone here
 
             SetContentView(Resource.Layout.Main);
 
@@ -53,6 +42,7 @@ namespace Burton.Android
                 new RelativeLayout.LayoutParams(width, height);
 
             await RequestCameraPreview();
+            await RequestMicrophoneAccess();
             RequestVoice();
 
 
@@ -78,26 +68,6 @@ namespace Burton.Android
             //};
         }
 
-
-        //protected override void OnActivityResult(int requestCode, global::Android.App.Result resultVal, Intent data)
-        //{
-        //    if (requestCode == 10)
-        //    {
-        //        if (resultVal == global::Android.App.Result.Ok)
-        //        {
-        //            var matches = data.GetStringArrayListExtra(RecognizerIntent.ExtraResults);
-        //            if (matches.Count != 0)
-        //            {
-        //                object a = null;
-        //            }
-        //        }
-
-        //        //base.OnActivityResult(requestCode, resultVal, data);
-        //    }
-        //}
-
-
-
         private void DrawWordBoundingBox(Rectangle resultLocation)
         {
             //define the paintbrush
@@ -106,11 +76,8 @@ namespace Burton.Android
             mpaint.SetStyle(Paint.Style.Stroke);
             mpaint.StrokeWidth = 2f;
 
-            //draw
             Canvas canvas = _surfaceView.Holder.LockCanvas();
-            //clear the paint of last time
             canvas.DrawColor(Color.Transparent, PorterDuff.Mode.Clear);
-            //draw a new one, set your ball's position to the rect here
             Rect r = new Rect(
                 (int)resultLocation.Left, 
                 (int)resultLocation.Top, 

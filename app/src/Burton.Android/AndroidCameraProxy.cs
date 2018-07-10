@@ -5,6 +5,7 @@ using Android.Content.PM;
 using Android.Graphics;
 using Android.OS;
 using Burton.Core.Common;
+using Permission = Android.Content.PM.Permission;
 #pragma warning disable 618
 using Camera = Android.Hardware.Camera;
 #pragma warning restore 618
@@ -83,13 +84,13 @@ namespace Burton.Android
         }
 
         public void OnCameraPermissionFinished(
-            int requestCode,
-            string[] permissions,
-            Permission[] grantResults)
+            object sender,
+            PermissionResultEventArgs args)
         {
-            if (requestCode == PERMISSION_REQUEST_CODE)
+            if (args.RequestCode == PERMISSION_REQUEST_CODE)
             {
-                if (grantResults.Length == 1 && grantResults[0] == Permission.Granted)
+                if (args.GrantResults.Length == 1 && 
+                    args.GrantResults[0] == Core.Common.Permission.Granted)
                 {
                     _permissionSource.SetResult(true);
                 }
@@ -97,13 +98,6 @@ namespace Burton.Android
                 {
                     _permissionSource.SetResult(false);
                 }
-            }
-            else
-            {
-                _activity.OnRequestPermissionsResult(
-                    requestCode,
-                    permissions,
-                    grantResults);
             }
         }
 

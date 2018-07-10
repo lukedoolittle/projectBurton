@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Threading.Tasks;
+using Android;
 using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Runtime;
 using Android.Speech;
 using Android.Speech.Tts;
+using Burton.Core.Common;
+using Permission = Android.Content.PM.Permission;
 
 namespace Burton.Android
 {
@@ -13,12 +17,57 @@ namespace Burton.Android
         IRecognitionListener, 
         TextToSpeech.IOnInitListener
     {
+        private const string AUDIO_PERMISSION = Manifest.Permission.RecordAudio;
+        private const int PERMISSION_REQUEST_CODE = 1;
+
         private SpeechRecognizer _speech;
         private Intent _speechIntent;
         private readonly ReadingActivity _readingActivity;
+        private TaskCompletionSource<bool> _permissionSource;
 
         public string Words;
 
+        public Task<bool> CanAccessMicrophone()
+        {
+            if (global::Android.Content.PM.PackageManager.FeatureMicrophone != "android.hardware.microphone")
+            {
+                throw new Exception("No microphone to record speech");
+            }
+
+            if ((int)Build.VERSION.SdkInt >= 23 &&
+                _readingActivity.CheckSelfPermission(AUDIO_PERMISSION) != (int)Permission.Granted)
+            {
+                _permissionSource = new TaskCompletionSource<bool>();
+
+                _readingActivity.RequestPermissions(
+                    new[] { AUDIO_PERMISSION },
+                    PERMISSION_REQUEST_CODE);
+
+                return _permissionSource.Task;
+            }
+            else
+            {
+                return Task.FromResult(true);
+            }
+        }
+
+        public void OnMicrophonePermissionFinished(
+            object sender,
+            PermissionResultEventArgs args)
+        {
+            if (args.RequestCode == PERMISSION_REQUEST_CODE)
+            {
+                if (args.GrantResults.Length == 1 &&
+                    args.GrantResults[0] == Core.Common.Permission.Granted)
+                {
+                    _permissionSource.SetResult(true);
+                }
+                else
+                {
+                    _permissionSource.SetResult(false);
+                }
+            }
+        }
 
         public AndroidSpeechToTextProxy(ReadingActivity context)
         {
@@ -66,7 +115,6 @@ namespace Burton.Android
 
         public void OnBeginningOfSpeech()
         {
-            object a = null;
         }
 
         public void OnBufferReceived(byte[] buffer)
@@ -75,7 +123,6 @@ namespace Burton.Android
 
         public void OnEndOfSpeech()
         {
-            object a = null;
         }
 
         public void OnError([GeneratedEnum] SpeechRecognizerError error)
@@ -86,7 +133,6 @@ namespace Burton.Android
 
         public void OnEvent(int eventType, Bundle @params)
         {
-            object a = null;
         }
 
         public void OnPartialResults(Bundle partialResults)
@@ -96,7 +142,6 @@ namespace Burton.Android
 
         public void OnReadyForSpeech(Bundle @params)
         {
-            object a = null;
         }
 
         public void OnResults(Bundle results)

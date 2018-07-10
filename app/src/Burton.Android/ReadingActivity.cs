@@ -1,16 +1,16 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Android.App;
-using Android.Content;
-using Android.Content.PM;
 using Android.Graphics;
 using Android.OS;
 using Android.Speech.Tts;
 using Android.Views;
+using Burton.Core.Common;
 using Burton.Core.Infrastructure;
 using Tesseract;
 using TinyIoC;
-using Result = Android.App.Result;
+using Permission = Android.Content.PM.Permission;
 
 namespace Burton.Android
 {
@@ -26,6 +26,8 @@ namespace Burton.Android
         protected readonly AndroidSpeechToTextProxy _speechToText;
         protected readonly OpticalCharacterRecognition _ocr;
 
+        public event EventHandler<PermissionResultEventArgs> PermissionRequested;
+
         public ReadingActivity()
         {
             _camera = new AndroidCameraProxy(this, 25);
@@ -34,6 +36,8 @@ namespace Burton.Android
             _ocr = new OpticalCharacterRecognition(TinyIoCContainer.Current.Resolve<ITesseractApi>());
 
             _camera.GeneratedPreviewImage += _ocr.CameraGeneratedPreviewImage;
+            PermissionRequested += _camera.OnCameraPermissionFinished;
+            PermissionRequested += _speechToText.OnMicrophonePermissionFinished;
         }
 
         protected override void OnCreate(Bundle savedInstanceState)
@@ -53,6 +57,14 @@ namespace Burton.Android
             }
         }
 
+        public async Task RequestMicrophoneAccess()
+        {
+            if (!await _speechToText.CanAccessMicrophone())
+            {
+                throw new Exception("Cannot get microphone permissions");
+            }
+        }
+
         public Task RequestVoice()
         {
             return _textToSpeech.InitializeLanguage();
@@ -63,10 +75,16 @@ namespace Burton.Android
             string[] permissions,
             Permission[] grantResults)
         {
-            _camera.OnCameraPermissionFinished(
-                requestCode, 
-                permissions,
-                grantResults);
+            PermissionRequested?.Invoke(
+                this,
+                new PermissionResultEventArgs
+                {
+                    RequestCode = requestCode,
+                    Permissions = permissions,
+                    GrantResults = grantResults.Select(r => r == Permission.Granted ? 
+                        Burton.Core.Common.Permission.Granted : 
+                        Burton.Core.Common.Permission.Denied).ToArray()
+                });
         }
 
         #region ISurfaceTextureListener

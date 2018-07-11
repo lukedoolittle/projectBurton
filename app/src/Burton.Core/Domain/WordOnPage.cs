@@ -1,6 +1,6 @@
 ﻿using Tesseract;
 
-namespace Burton.Core.Common
+namespace Burton.Core.Domain
 {
     public class WordOnPage
     {

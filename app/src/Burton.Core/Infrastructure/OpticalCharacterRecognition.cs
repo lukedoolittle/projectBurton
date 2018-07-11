@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Burton.Core.Common;
+using Burton.Core.Domain;
 using Tesseract;
 
 namespace Burton.Core.Infrastructure

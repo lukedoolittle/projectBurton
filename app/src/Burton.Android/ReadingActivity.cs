@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Android.App;
@@ -7,6 +8,7 @@ using Android.OS;
 using Android.Speech.Tts;
 using Android.Views;
 using Burton.Core.Common;
+using Burton.Core.Domain;
 using Burton.Core.Infrastructure;
 using Tesseract;
 using TinyIoC;
@@ -21,10 +23,12 @@ namespace Burton.Android
         TextToSpeech.IOnInitListener
     {
         private SurfaceTexture _surface;
-        protected readonly AndroidCameraProxy _camera;
-        protected readonly AndroidTextToSpeechProxy _textToSpeech;
-        protected readonly AndroidSpeechToTextProxy _speechToText;
+        private readonly AndroidCameraProxy _camera;
+        private readonly AndroidTextToSpeechProxy _textToSpeech;
+        private readonly AndroidSpeechToTextProxy _speechToText;
         protected readonly OpticalCharacterRecognition _ocr;
+
+        private Viewport _currentView;
 
         public event EventHandler<PermissionResultEventArgs> PermissionRequested;
 
@@ -38,12 +42,26 @@ namespace Burton.Android
             _camera.GeneratedPreviewImage += _ocr.CameraGeneratedPreviewImage;
             PermissionRequested += _camera.OnCameraPermissionFinished;
             PermissionRequested += _speechToText.OnMicrophonePermissionFinished;
+
+            _ocr.CapturedText += (sender, args) => { ViewPage(args.Words); };
         }
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
         }
+
+        public void Speak(string message)
+        {
+            _textToSpeech.Speak(message);
+        }
+
+        public void ViewPage(List<WordOnPage> words)
+        {
+            _currentView.HandleNewView(words);
+        }
+
+        #region Permissions
 
         public async Task RequestCameraPreview()
         {
@@ -86,6 +104,8 @@ namespace Burton.Android
                         Burton.Core.Common.Permission.Denied).ToArray()
                 });
         }
+
+        #endregion Permissions
 
         #region ISurfaceTextureListener
 

@@ -64,7 +64,7 @@ namespace Burton.Android
             //    {
             //        DrawWordBoundingBox(result.Location);
             //    }
-            //    _textToSpeech.Speak("Great Job");
+                
             //};
         }
 

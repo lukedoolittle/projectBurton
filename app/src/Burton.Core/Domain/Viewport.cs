@@ -7,7 +7,17 @@ namespace Burton.Core.Domain
     {
         public Page CurrentPage { get; set; }
 
-        public void HandleNewView(List<WordOnPage> words)
+        public void AdvanceCurrentWord()
+        {
+            var currentWordIndex = CurrentPage.Words.IndexOf(CurrentPage.ActiveWord);
+
+            CurrentPage.ActiveWord = 
+                currentWordIndex == CurrentPage.Words.Count ? 
+                    null : 
+                    CurrentPage.Words[currentWordIndex+1];
+        }
+
+        public void ChangePage(List<WordOnPage> words)
         {
             if (CurrentPage == null)
             {

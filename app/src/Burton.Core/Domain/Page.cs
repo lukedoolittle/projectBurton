@@ -18,7 +18,7 @@ namespace Burton.Core.Domain
         public bool ReconcilePage(List<WordOnPage> words)
         {
             var currentWords = Words.Select(w => w.Word);
-            var newWords = Words.Select(w => w.Word);
+            var newWords = words.Select(w => w.Word);
 
             var firstNotSecond = currentWords.Except(newWords).ToList();
             var secondNotFirst = newWords.Except(currentWords).ToList();

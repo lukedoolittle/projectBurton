@@ -10,7 +10,14 @@ namespace Burton.Core.Domain
 
         public Book Book { get; set; }
 
-        public List<Assessment<string>> Phonics { get; set; }
-        public List<Assessment<QuestionAnswerPair>> Comprehension { get; set; }
+        /// <summary>
+        /// Track current history of performed words
+        /// </summary>
+        public List<SpeechPerformance> SpeechPerformances { get; set; }
+
+        /// <summary>
+        /// Track current history of prompted questions (vocabulary or comprehension)
+        /// </summary>
+        public List<QuestionPerformance> QuestionPerformances { get; set; }
     }
 }

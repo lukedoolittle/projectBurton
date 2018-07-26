@@ -58,7 +58,7 @@ namespace Burton.Android
 
         public void ViewPage(List<WordOnPage> words)
         {
-            _currentView.HandleNewView(words);
+            _currentView.ChangePage(words);
         }
 
         #region Permissions

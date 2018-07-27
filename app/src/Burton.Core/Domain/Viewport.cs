@@ -19,6 +19,8 @@ namespace Burton.Core.Domain
 
         public void ChangePage(List<WordOnPage> words)
         {
+            //if there is no current page then we just started
+            //make the words the current page
             if (CurrentPage == null)
             {
                 CurrentPage = new Page
@@ -29,10 +31,12 @@ namespace Burton.Core.Domain
             }
             else
             {
+                var areWordsOnCurrentPage = CurrentPage.AreWordsOnCurrentPage(words);
+
                 //if we are looking at a different page AND there
                 //is no active word (ie the current page is finished)
                 //then turn the page
-                if (!CurrentPage.ReconcilePage(words) &&
+                if (!areWordsOnCurrentPage &&
                     CurrentPage.ActiveWord == null)
                 {
                     CurrentPage = new Page
@@ -40,6 +44,14 @@ namespace Burton.Core.Domain
                         Words = words,
                         ActiveWord = words.First()
                     };
+                }
+                //otherwise if the words are on the current page then adjust all the locations
+                else if (areWordsOnCurrentPage)
+                {
+                    for (var i = 0; i < words.Count; i++)
+                    {
+                        CurrentPage.Words[i].Location = words[i].Location;
+                    }
                 }
             }
         }

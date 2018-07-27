@@ -15,7 +15,7 @@ namespace Burton.Core.Domain
         /// </summary>
         /// <param name="words">Words currently in view</param>
         /// <returns>True if the page is the same, false otherwise</returns>
-        public bool ReconcilePage(List<WordOnPage> words)
+        public bool AreWordsOnCurrentPage(List<WordOnPage> words)
         {
             var currentWords = Words.Select(w => w.Word);
             var newWords = words.Select(w => w.Word);
@@ -23,15 +23,7 @@ namespace Burton.Core.Domain
             var firstNotSecond = currentWords.Except(newWords).ToList();
             var secondNotFirst = newWords.Except(currentWords).ToList();
 
-            if (!firstNotSecond.Any() && !secondNotFirst.Any())
-            {
-                Words = words;
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return !firstNotSecond.Any() && !secondNotFirst.Any();
         }
     }
 }

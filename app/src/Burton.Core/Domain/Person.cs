@@ -4,6 +4,6 @@ namespace Burton.Core.Domain
 {
     public class Person
     {
-        public List<Reading> Readings { get; set; }
+        public List<ReadingSession> Readings { get; set; }
     }
 }

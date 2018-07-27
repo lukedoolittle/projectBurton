@@ -3,11 +3,14 @@ using System.Collections.Generic;
 
 namespace Burton.Core.Domain
 {
-    public class Reading
+    public class ReadingSession
     {
         public DateTimeOffset StartTime { get; set; }
         public DateTimeOffset EndTime { get; set; }
 
+        /// <summary>
+        /// The book that is part of the reading session
+        /// </summary>
         public Book Book { get; set; }
 
         /// <summary>

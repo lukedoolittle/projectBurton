@@ -43,10 +43,9 @@ namespace Burton.Android
 
             await RequestCameraPreview();
             await RequestMicrophoneAccess();
+            //todo: figure out why we can't make this an async call
             RequestVoice();
-
-
-            //_speechToText.StartListening();
+            _speechToText.StartListening();
 
             //var voiceIntent = new Intent(RecognizerIntent.ActionRecognizeSpeech);
             //voiceIntent.PutExtra(RecognizerIntent.ExtraLanguageModel, RecognizerIntent.LanguageModelFreeForm);
@@ -57,36 +56,28 @@ namespace Burton.Android
             //voiceIntent.PutExtra(RecognizerIntent.ExtraLanguage, Java.Util.Locale.Default);
             //StartActivityForResult(voiceIntent, 10);
 
-
-            //_ocr.CapturedText += (sender, args) =>
-            //{
-            //    foreach (var result in args.Words)
-            //    {
-            //        DrawWordBoundingBox(result.Location);
-            //    }
-                
-            //};
+            _reading.ChangedActiveWord += (sender, args) =>
+            {
+                DrawWordBoundingBox(args.NewActiveWord.Location);
+            };
         }
 
         private void DrawWordBoundingBox(Rectangle resultLocation)
         {
-            //define the paintbrush
-            Paint mpaint = new Paint();
-            mpaint.Color = Color.Red;
-            mpaint.SetStyle(Paint.Style.Stroke);
-            mpaint.StrokeWidth = 2f;
+            var paint = new Paint {Color = Color.Red};
+            paint.SetStyle(Paint.Style.Stroke);
+            paint.StrokeWidth = 2f;
 
-            Canvas canvas = _surfaceView.Holder.LockCanvas();
+            var canvas = _surfaceView.Holder.LockCanvas();
             canvas.DrawColor(Color.Transparent, PorterDuff.Mode.Clear);
-            Rect r = new Rect(
+            var rectangle = new Rect(
                 (int)resultLocation.Left, 
                 (int)resultLocation.Top, 
                 (int)resultLocation.Right, 
                 (int)resultLocation.Bottom);
-            canvas.DrawRect(r, mpaint);
+            canvas.DrawRect(rectangle, paint);
             _surfaceView.Holder.UnlockCanvasAndPost(canvas);
         }
-
     }
 }
 

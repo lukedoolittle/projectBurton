@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Android.App;
@@ -22,28 +21,33 @@ namespace Burton.Android
         TextureView.ISurfaceTextureListener,
         TextToSpeech.IOnInitListener
     {
+        private const int OCR_REFRESH_FREQUENCY = 25;
+
         private SurfaceTexture _surface;
+        protected readonly ReadingFacade _reading;
         private readonly AndroidCameraProxy _camera;
         private readonly AndroidTextToSpeechProxy _textToSpeech;
-        private readonly AndroidSpeechToTextProxy _speechToText;
+        protected readonly AndroidSpeechToTextProxy _speechToText;
         protected readonly OpticalCharacterRecognition _ocr;
-
-        private Viewport _currentView;
 
         public event EventHandler<PermissionResultEventArgs> PermissionRequested;
 
         public ReadingActivity()
         {
-            _camera = new AndroidCameraProxy(this, 25);
+            _camera = new AndroidCameraProxy(this, OCR_REFRESH_FREQUENCY);
             _textToSpeech = new AndroidTextToSpeechProxy(this);
             _speechToText = new AndroidSpeechToTextProxy(this);
             _ocr = new OpticalCharacterRecognition(TinyIoCContainer.Current.Resolve<ITesseractApi>());
+            _reading = new ReadingFacade(new Viewport(), new ReadingSession { StartTime = DateTimeOffset.Now });
 
             _camera.GeneratedPreviewImage += _ocr.CameraGeneratedPreviewImage;
+
             PermissionRequested += _camera.OnCameraPermissionFinished;
             PermissionRequested += _speechToText.OnMicrophonePermissionFinished;
 
-            _ocr.CapturedText += (sender, args) => { ViewPage(args.Words); };
+            _ocr.CapturedText += (sender, args) => { _reading.SawNewWords(args.Words); };
+
+            _speechToText.WordCaptured += (sender, args) => { _reading.HeardSpokenWord(args.Word); };
         }
 
         protected override void OnCreate(Bundle savedInstanceState)
@@ -54,11 +58,6 @@ namespace Burton.Android
         public void Speak(string message)
         {
             _textToSpeech.Speak(message);
-        }
-
-        public void ViewPage(List<WordOnPage> words)
-        {
-            _currentView.ChangePage(words);
         }
 
         #region Permissions

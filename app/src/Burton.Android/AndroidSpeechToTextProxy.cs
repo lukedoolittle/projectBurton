@@ -25,7 +25,7 @@ namespace Burton.Android
         private readonly ReadingActivity _readingActivity;
         private TaskCompletionSource<bool> _permissionSource;
 
-        public string Words;
+        public event EventHandler<CapturedWordEventArgs> WordCaptured;
 
         public Task<bool> CanAccessMicrophone()
         {
@@ -72,7 +72,7 @@ namespace Burton.Android
         public AndroidSpeechToTextProxy(ReadingActivity context)
         {
             _readingActivity = context;
-            Words = "";
+            //Words = "";
             _speech = SpeechRecognizer.CreateSpeechRecognizer(_readingActivity);
             _speech.SetRecognitionListener(this);
             _speechIntent = new Intent(RecognizerIntent.ActionRecognizeSpeech);
@@ -127,7 +127,7 @@ namespace Burton.Android
 
         public void OnError([GeneratedEnum] SpeechRecognizerError error)
         {
-            Words = error.ToString();
+            //Words = error.ToString();
             Restart();
         }
 
@@ -137,7 +137,14 @@ namespace Burton.Android
 
         public void OnPartialResults(Bundle partialResults)
         {
-            object a = null;
+            var matches = partialResults.GetStringArrayList(SpeechRecognizer.ResultsRecognition);
+
+            if (matches.Count != 0)
+            {
+                WordCaptured?.Invoke(
+                    this,
+                    new CapturedWordEventArgs {Word = matches[0]});
+            }
         }
 
         public void OnReadyForSpeech(Bundle @params)
@@ -146,16 +153,13 @@ namespace Burton.Android
 
         public void OnResults(Bundle results)
         {
-
-            var matches = results.GetStringArrayList(SpeechRecognizer.ResultsRecognition);
-            if (matches == null)
-                Words = "Null";
-            else if (matches.Count != 0)
-                Words = matches[0];
-            else
-                Words = "";
-
-            //do anything you want for the result
+            //var matches = results.GetStringArrayList(SpeechRecognizer.ResultsRecognition);
+            //if (matches == null)
+            //    Words = "Null";
+            //else if (matches.Count != 0)
+            //    Words = matches[0];
+            //else
+            //    Words = "";
         }
 
         public void OnRmsChanged(float rmsdB)
@@ -165,7 +169,6 @@ namespace Burton.Android
 
         public void OnInit([GeneratedEnum] OperationResult status)
         {
-            object a = null;
         }
     }
 }

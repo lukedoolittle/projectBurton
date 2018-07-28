@@ -40,14 +40,20 @@ namespace Burton.Android
             _ocr = new OpticalCharacterRecognition(TinyIoCContainer.Current.Resolve<ITesseractApi>());
             _reading = new ReadingFacade(new Viewport(), new ReadingSession { StartTime = DateTimeOffset.Now });
 
-            _camera.GeneratedPreviewImage += _ocr.CameraGeneratedPreviewImage;
-
             PermissionRequested += _camera.OnCameraPermissionFinished;
             PermissionRequested += _speechToText.OnMicrophonePermissionFinished;
 
-            _ocr.CapturedText += (sender, args) => { _reading.SawNewWords(args.Words); };
+            _camera.GeneratedPreviewImage += _ocr.CameraGeneratedPreviewImage;
+            //_ocr.CapturedText += (sender, args) => { _reading.SawNewWords(args.Words); };
+            _ocr.CapturedText += (sender, args) =>
+            {
+                Console.WriteLine("OCR_DEBUG: " +
+                    string.Join(
+                        " ", 
+                        args.Words.Select(w => w.Word)));
+            };
 
-            _speechToText.WordCaptured += (sender, args) => { _reading.HeardSpokenWord(args.Word); };
+            //_speechToText.WordCaptured += (sender, args) => { _reading.HeardSpokenWord(args.Word); };
         }
 
         protected override void OnCreate(Bundle savedInstanceState)
@@ -58,6 +64,11 @@ namespace Burton.Android
         public void Speak(string message)
         {
             _textToSpeech.Speak(message);
+        }
+
+        public Task InitializeOCR()
+        {
+            return _ocr.Initialize();
         }
 
         #region Permissions
@@ -144,5 +155,6 @@ namespace Burton.Android
         }
 
         #endregion IOnInitListener
+
     }
 }

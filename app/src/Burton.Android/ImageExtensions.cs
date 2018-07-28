@@ -4,7 +4,7 @@ using Android.Graphics;
 
 namespace Burton.Android
 {
-    public static class Extensions
+    public static class ImageExtensions
     {
         public static byte[] ImageToJpeg(
             this byte[] yuvData, 

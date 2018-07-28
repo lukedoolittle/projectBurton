@@ -6,5 +6,7 @@ namespace Burton.Core.Domain
     {
         public string Word { get; set; }
         public Rectangle Location { get; set; }
+
+        public float Confidence { get; set; }
     }
 }

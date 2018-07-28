@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Burton.Core.Common;
 using Burton.Core.Domain;
 using Tesseract;
@@ -21,15 +21,7 @@ namespace Burton.Core.Infrastructure
             object sender, 
             PreviewImageEventArgs e)
         {
-            if (!_tesseract.Initialized)
-            {
-                await _tesseract.Init(
-                    "eng",
-                    OcrEngineMode.TesseractCubeCombined);
-                _tesseract.SetPageSegmentationMode(PageSegmentationMode.AutoOnly);
-                _tesseract.SetBlacklist("/");
-            }
-
+            //todo: probably we should check here for initialization
             if (await _tesseract.SetImage(e.Image))
             {
                 if (!string.IsNullOrEmpty(_tesseract.Text))
@@ -38,18 +30,30 @@ namespace Burton.Core.Infrastructure
                         this,
                         new CapturedTextEventArgs
                         {
-                            Words = ParseWordResults(_tesseract.Results(PageIteratorLevel.Word))
+                            Words = _tesseract
+                                .Results(PageIteratorLevel.Word)
+                                .Select(r => new WordOnPage
+                                {
+                                    Word = r.Text.ToLower(),
+                                    Location = r.Box,
+                                    Confidence = r.Confidence
+                                })
+                                .ToList()
                         });
                 }
             }
         }
 
-        private static List<WordOnPage> ParseWordResults(IEnumerable<Result> results)
+        public async Task Initialize()
         {
-            return results
-                .Where(r => r.Confidence >= 0.85f && r.Text != ".")
-                .Select(r => new WordOnPage { Word = r.Text.ToLower(), Location = r.Box })
-                .ToList();
+            if (!_tesseract.Initialized)
+            {
+                await _tesseract.Init(
+                    "eng",
+                    OcrEngineMode.TesseractCubeCombined);
+                _tesseract.SetPageSegmentationMode(PageSegmentationMode.SingleBlock); //maybe AutoOnly
+                _tesseract.SetBlacklist("/");
+            }
         }
     }
 }

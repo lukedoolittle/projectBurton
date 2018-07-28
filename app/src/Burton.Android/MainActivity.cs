@@ -41,20 +41,14 @@ namespace Burton.Android
             _textureView.LayoutParameters =
                 new RelativeLayout.LayoutParams(width, height);
 
+            await InitializeOCR();
             await RequestCameraPreview();
             await RequestMicrophoneAccess();
-            //todo: figure out why we can't make this an async call
-            RequestVoice();
-            _speechToText.StartListening();
-
-            //var voiceIntent = new Intent(RecognizerIntent.ActionRecognizeSpeech);
-            //voiceIntent.PutExtra(RecognizerIntent.ExtraLanguageModel, RecognizerIntent.LanguageModelFreeForm);
-            //voiceIntent.PutExtra(RecognizerIntent.ExtraSpeechInputCompleteSilenceLengthMillis, 1500);
-            //voiceIntent.PutExtra(RecognizerIntent.ExtraSpeechInputPossiblyCompleteSilenceLengthMillis, 1500);
-            //voiceIntent.PutExtra(RecognizerIntent.ExtraSpeechInputMinimumLengthMillis, 15000);
-            //voiceIntent.PutExtra(RecognizerIntent.ExtraMaxResults, 1);
-            //voiceIntent.PutExtra(RecognizerIntent.ExtraLanguage, Java.Util.Locale.Default);
-            //StartActivityForResult(voiceIntent, 10);
+#pragma warning disable 4014
+            RequestVoice(); //todo: figure out why we can't make await this call
+#pragma warning restore 4014
+            
+            //_speechToText.StartListening();
 
             _reading.ChangedActiveWord += (sender, args) =>
             {

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Android;
 using Android.App;
@@ -25,7 +26,11 @@ namespace Burton.Android
         private readonly ReadingActivity _readingActivity;
         private TaskCompletionSource<bool> _permissionSource;
 
+        private string _partialResults = string.Empty;
+        private static readonly object PARTIAL_RESULTS_LOCK = new object();
+
         public event EventHandler<CapturedWordEventArgs> WordCaptured;
+        public event EventHandler<WordTimeoutEventArgs> WordTimeout;
 
         public Task<bool> CanAccessMicrophone()
         {
@@ -72,35 +77,23 @@ namespace Burton.Android
         public AndroidSpeechToTextProxy(ReadingActivity context)
         {
             _readingActivity = context;
-            //Words = "";
-            _speech = SpeechRecognizer.CreateSpeechRecognizer(_readingActivity);
-            _speech.SetRecognitionListener(this);
-            _speechIntent = new Intent(RecognizerIntent.ActionRecognizeSpeech);
-            _speechIntent.PutExtra(RecognizerIntent.ExtraLanguageModel, RecognizerIntent.LanguageModelFreeForm);
-            //_speechIntent.PutExtra(RecognizerIntent.ActionRecognizeSpeech, RecognizerIntent.ExtraPreferOffline);
-            _speechIntent.PutExtra(RecognizerIntent.ExtraSpeechInputCompleteSilenceLengthMillis, 1500);
-            _speechIntent.PutExtra(RecognizerIntent.ExtraSpeechInputPossiblyCompleteSilenceLengthMillis, 1500);
-            _speechIntent.PutExtra(RecognizerIntent.ExtraSpeechInputMinimumLengthMillis, 15000);
-            _speechIntent.PutExtra(RecognizerIntent.ExtraMaxResults, 1);
-            _speechIntent.PutExtra(RecognizerIntent.ExtraLanguage, Java.Util.Locale.Default);
-            _speechIntent.PutExtra(RecognizerIntent.ExtraCallingPackage, Application.Context.PackageName);
+            CreateIntent();
         }
 
-        void Restart()
+        private void CreateIntent()
         {
-            _speech.Destroy();
             _speech = SpeechRecognizer.CreateSpeechRecognizer(_readingActivity);
             _speech.SetRecognitionListener(this);
             _speechIntent = new Intent(RecognizerIntent.ActionRecognizeSpeech);
             _speechIntent.PutExtra(RecognizerIntent.ExtraLanguageModel, RecognizerIntent.LanguageModelFreeForm);
             //_speechIntent.PutExtra(RecognizerIntent.ActionRecognizeSpeech, RecognizerIntent.ExtraPreferOffline);
-            _speechIntent.PutExtra(RecognizerIntent.ExtraSpeechInputCompleteSilenceLengthMillis, 1500);
-            _speechIntent.PutExtra(RecognizerIntent.ExtraSpeechInputPossiblyCompleteSilenceLengthMillis, 1500);
-            _speechIntent.PutExtra(RecognizerIntent.ExtraSpeechInputMinimumLengthMillis, 15000);
+            //_speechIntent.PutExtra(RecognizerIntent.ExtraSpeechInputCompleteSilenceLengthMillis, 10000);
+            //_speechIntent.PutExtra(RecognizerIntent.ExtraSpeechInputPossiblyCompleteSilenceLengthMillis, 10000);
+            //_speechIntent.PutExtra(RecognizerIntent.ExtraSpeechInputMinimumLengthMillis, 15000);
+            _speechIntent.PutExtra(RecognizerIntent.ExtraPartialResults, true);
             _speechIntent.PutExtra(RecognizerIntent.ExtraMaxResults, 1);
             _speechIntent.PutExtra(RecognizerIntent.ExtraLanguage, Java.Util.Locale.Default);
             _speechIntent.PutExtra(RecognizerIntent.ExtraCallingPackage, Application.Context.PackageName);
-            StartListening();
         }
 
         public void StartListening()
@@ -110,7 +103,57 @@ namespace Burton.Android
 
         public void StopListening()
         {
+            _partialResults = string.Empty;
+
             _speech.StopListening();
+        }
+
+        public void OnError([GeneratedEnum] SpeechRecognizerError error)
+        {
+            _partialResults = string.Empty;
+
+            if (error == SpeechRecognizerError.SpeechTimeout)
+            {
+                WordTimeout?.Invoke(
+                    this,
+                    new WordTimeoutEventArgs());
+            }
+            else
+            {
+                _speech.Destroy();
+                CreateIntent();
+                StartListening();
+            }
+        }
+
+        public void OnPartialResults(Bundle partialResults)
+        {
+            var matches = partialResults.GetStringArrayList(SpeechRecognizer.ResultsRecognition);
+
+            if (matches.Count != 0)
+            {
+                var currentWords = matches[0];
+                var newWords = new List<string>();
+
+                lock (PARTIAL_RESULTS_LOCK)
+                {
+                    newWords = currentWords
+                        .GetStringAfterStartingString(_partialResults)
+                        .GetNonEmptyTokens();
+                    _partialResults = currentWords;
+                }
+
+                foreach (var newWord in newWords)
+                {
+                    WordCaptured?.Invoke(
+                        this,
+                        new CapturedWordEventArgs { Word = newWord });
+                }
+            }
+        }
+
+        public void OnEvent(int eventType, Bundle @params)
+        {
         }
 
         public void OnBeginningOfSpeech()
@@ -125,46 +168,16 @@ namespace Burton.Android
         {
         }
 
-        public void OnError([GeneratedEnum] SpeechRecognizerError error)
-        {
-            //Words = error.ToString();
-            Restart();
-        }
-
-        public void OnEvent(int eventType, Bundle @params)
-        {
-        }
-
-        public void OnPartialResults(Bundle partialResults)
-        {
-            var matches = partialResults.GetStringArrayList(SpeechRecognizer.ResultsRecognition);
-
-            if (matches.Count != 0)
-            {
-                WordCaptured?.Invoke(
-                    this,
-                    new CapturedWordEventArgs {Word = matches[0]});
-            }
-        }
-
         public void OnReadyForSpeech(Bundle @params)
         {
         }
 
         public void OnResults(Bundle results)
         {
-            //var matches = results.GetStringArrayList(SpeechRecognizer.ResultsRecognition);
-            //if (matches == null)
-            //    Words = "Null";
-            //else if (matches.Count != 0)
-            //    Words = matches[0];
-            //else
-            //    Words = "";
         }
 
         public void OnRmsChanged(float rmsdB)
         {
-
         }
 
         public void OnInit([GeneratedEnum] OperationResult status)

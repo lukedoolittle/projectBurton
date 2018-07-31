@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Android;
-using Android.Content.PM;
 using Android.Graphics;
 using Android.OS;
 using Burton.Core.Common;
+using OpenCV.Android;
+using OpenCV.Core;
+using OpenCV.ImgCodecs;
+using OpenCV.ImgProc;
 using Permission = Android.Content.PM.Permission;
 #pragma warning disable 618
 using Camera = Android.Hardware.Camera;
@@ -130,14 +133,34 @@ namespace Burton.Android
             {
                 var parameters = camera.GetParameters();
 
+                //Mat mat = Imgcodecs.Imdecode(new MatOfByte(data), Imgcodecs.CvLoadImageUnchanged);
+
+                var result = new Mat();
+                var src = new Mat(
+                    parameters.PreviewSize.Width, 
+                    parameters.PreviewSize.Height, 
+                    CvType.Cv8u);
+                src.Put(0, 0, data.ImageToJpeg(
+                    parameters.PreviewSize.Width,
+                    parameters.PreviewSize.Height,
+                    parameters.PreviewFormat));
+
+                Imgproc.AdaptiveThreshold(
+                    src, 
+                    result, 
+                    125, 
+                    Imgproc.AdaptiveThreshGaussianC, 
+                    Imgproc.ThreshBinary, 
+                    11, 
+                    12);
+
+                src.Get(0, 0, data);
+
                 GeneratedPreviewImage?.Invoke(
                     this,
                     new PreviewImageEventArgs
                     {
-                        Image = data.ImageToJpeg(
-                            parameters.PreviewSize.Width,
-                            parameters.PreviewSize.Height,
-                            parameters.PreviewFormat)
+                        Image = data
                     });
             }
         }

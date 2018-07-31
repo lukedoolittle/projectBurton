@@ -52,7 +52,7 @@ namespace Burton.Core.Infrastructure
                     "eng",
                     OcrEngineMode.TesseractCubeCombined);
                 _tesseract.SetPageSegmentationMode(PageSegmentationMode.SingleBlock); //maybe AutoOnly
-                _tesseract.SetBlacklist("/");
+                _tesseract.SetWhitelist("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890");
             }
         }
     }

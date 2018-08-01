@@ -113,6 +113,7 @@ namespace Burton.Android
             if (surface == null) throw new ArgumentNullException(nameof(surface));
 
             _camera.SetPreviewTexture(surface);
+            _camera.SetParameters(Camera.Parameters.);
             _camera.SetPreviewCallback(this);
             _camera.StartPreview();
         }
@@ -135,32 +136,35 @@ namespace Burton.Android
 
                 //Mat mat = Imgcodecs.Imdecode(new MatOfByte(data), Imgcodecs.CvLoadImageUnchanged);
 
-                var result = new Mat();
-                var src = new Mat(
-                    parameters.PreviewSize.Width, 
-                    parameters.PreviewSize.Height, 
-                    CvType.Cv8u);
-                src.Put(0, 0, data.ImageToJpeg(
-                    parameters.PreviewSize.Width,
-                    parameters.PreviewSize.Height,
-                    parameters.PreviewFormat));
+                //var result = new Mat();
+                //var src = new Mat(
+                //    parameters.PreviewSize.Width, 
+                //    parameters.PreviewSize.Height, 
+                //    CvType.Cv8u);
+                //src.Put(0, 0, data.ImageToJpeg(
+                //    parameters.PreviewSize.Width,
+                //    parameters.PreviewSize.Height,
+                //    parameters.PreviewFormat));
 
-                Imgproc.AdaptiveThreshold(
-                    src, 
-                    result, 
-                    125, 
-                    Imgproc.AdaptiveThreshGaussianC, 
-                    Imgproc.ThreshBinary, 
-                    11, 
-                    12);
+                //Imgproc.AdaptiveThreshold(
+                //    src, 
+                //    result, 
+                //    125, 
+                //    Imgproc.AdaptiveThreshGaussianC, 
+                //    Imgproc.ThreshBinary, 
+                //    11, 
+                //    12);
 
-                src.Get(0, 0, data);
+                //src.Get(0, 0, data);
 
                 GeneratedPreviewImage?.Invoke(
                     this,
                     new PreviewImageEventArgs
                     {
-                        Image = data
+                        Image = data.ImageToJpeg(
+                            parameters.PreviewSize.Width,
+                            parameters.PreviewSize.Height,
+                            parameters.PreviewFormat)
                     });
             }
         }

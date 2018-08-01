@@ -20,7 +20,7 @@ namespace Burton.Android
         {
             string content;
             var assets = MainApplication.CurrentActivity.Assets;
-            using (var sr = new StreamReader(assets.Open("popularWords")))
+            using (var sr = new StreamReader(assets.Open("popularWords.txt")))
             {
                 content = sr.ReadToEnd();
             }

@@ -1,9 +1,12 @@
-﻿using Android.App;
+﻿using System.Collections.Generic;
+using System.Linq;
+using Android.App;
 using Android.Content.PM;
 using Android.Graphics;
 using Android.Widget;
 using Android.OS;
 using Android.Views;
+using Burton.Core.Domain;
 using Tesseract;
 
 namespace Burton.Android
@@ -54,6 +57,44 @@ namespace Burton.Android
             {
                 DrawWordBoundingBox(args.NewActiveWord.Location);
             };
+
+            var rules = new PageRules();
+            //rules
+            //    .AddRule(new DictionaryWordsRule(Dictionary.GetAllEnglishWords()))
+
+            rules.AddRule(new BadCharactersRule())
+                .AddRule(new ConfidenceRule())
+                .AddRule(new SingleCharactersRule())
+                .AddRule(new ExtremeSizeBoundingBoxRule())
+                .AddFinalRule(new MinimumPageLengthRule());
+
+            _ocr.CapturedText += (sender, args) =>
+            {
+                var validWords = rules.ApplyRules(args.Words);
+                var output = string.Join(" ", validWords.Select(w => w.Word));
+                DrawWordBoundingBoxes(validWords.Select(w => w.Location));
+            };
+        }
+
+        private void DrawWordBoundingBoxes(IEnumerable<Rectangle> resultLocations)
+        {
+            var paint = new Paint { Color = Color.Red };
+            paint.SetStyle(Paint.Style.Stroke);
+            paint.StrokeWidth = 2f;
+
+            var canvas = _surfaceView.Holder.LockCanvas();
+            canvas.DrawColor(Color.Transparent, PorterDuff.Mode.Clear);
+            var rectangles = resultLocations.Select(r =>
+                new Rect(new Rect(
+                    (int) r.Left,
+                    (int) r.Top,
+                    (int) r.Right,
+                    (int) r.Bottom)));
+            foreach (var rectangle in rectangles)
+            {
+                canvas.DrawRect(rectangle, paint);
+            }
+            _surfaceView.Holder.UnlockCanvasAndPost(canvas);
         }
 
         private void DrawWordBoundingBox(Rectangle resultLocation)

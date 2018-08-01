@@ -30,7 +30,9 @@ namespace Burton.Core.Domain
                 remainingWords = rule.ApplyRule(remainingWords);
             }
 
-            return _finalRule.ApplyRule(remainingWords);
+            return _finalRule != null ? 
+                _finalRule.ApplyRule(remainingWords) : 
+                remainingWords;
         }
 
     }

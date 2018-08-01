@@ -21,7 +21,7 @@ namespace Burton.Android
         TextureView.ISurfaceTextureListener,
         TextToSpeech.IOnInitListener
     {
-        private const int OCR_REFRESH_FREQUENCY = 15;
+        private const int OCR_REFRESH_FREQUENCY = 60;
 
         private SurfaceTexture _surface;
         protected readonly ReadingFacade _reading;
@@ -39,6 +39,11 @@ namespace Burton.Android
             _speechToText = new AndroidSpeechToTextProxy(this);
             _ocr = new OpticalCharacterRecognition(TinyIoCContainer.Current.Resolve<ITesseractApi>());
             _reading = new ReadingFacade(new Viewport(), new ReadingSession { StartTime = DateTimeOffset.Now });
+        }
+
+        protected override void OnCreate(Bundle savedInstanceState)
+        {
+            base.OnCreate(savedInstanceState);
 
             PermissionRequested += _camera.OnCameraPermissionFinished;
             PermissionRequested += _speechToText.OnMicrophonePermissionFinished;
@@ -51,28 +56,16 @@ namespace Burton.Android
                 .AddFinalRule(new MinimumPageLengthRule());
 
             _camera.GeneratedPreviewImage += _ocr.CameraGeneratedPreviewImage;
-            _ocr.CapturedText += (sender, args) =>
-            {
-                var actualWords = rules.ApplyRules(args.Words);
-                if (actualWords.Count > 0)
-                {
-                    _reading.SawNewWords(args.Words);
-                }
-            };
             //_ocr.CapturedText += (sender, args) =>
             //{
-            //    Console.WriteLine("OCR_DEBUG: " +
-            //        string.Join(
-            //            " ", 
-            //            args.Words.Select(w => w.Word)));
+            //    var actualWords = rules.ApplyRules(args.Words);
+            //    if (actualWords.Count > 0)
+            //    {
+            //        _reading.SawNewWords(args.Words);
+            //    }
             //};
 
-            //_speechToText.WordCaptured += (sender, args) => { _reading.HeardSpokenWord(args.Word); };
-        }
-
-        protected override void OnCreate(Bundle savedInstanceState)
-        {
-            base.OnCreate(savedInstanceState);
+            _speechToText.WordCaptured += (sender, args) => { _reading.HeardSpokenWord(args.Word); };
         }
 
         public void Speak(string message)

@@ -22,23 +22,24 @@ namespace Burton.Core.Infrastructure
             PreviewImageEventArgs e)
         {
             //todo: probably we should check here for initialization
-            if (await _tesseract.SetImage(e.Image))
+            if (await _tesseract.SetImage(e.Image).ConfigureAwait(false))
             {
                 if (!string.IsNullOrEmpty(_tesseract.Text))
                 {
+                    var words = _tesseract
+                        .Results(PageIteratorLevel.Word)
+                        .Select(r => new WordOnPage
+                        {
+                            Word = r.Text.ToLower(),
+                            Location = r.Box,
+                            Confidence = r.Confidence
+                        })
+                        .ToList();
                     CapturedText?.Invoke(
                         this,
                         new CapturedTextEventArgs
                         {
-                            Words = _tesseract
-                                .Results(PageIteratorLevel.Word)
-                                .Select(r => new WordOnPage
-                                {
-                                    Word = r.Text.ToLower(),
-                                    Location = r.Box,
-                                    Confidence = r.Confidence
-                                })
-                                .ToList()
+                            Words = words
                         });
                 }
             }

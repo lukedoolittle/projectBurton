@@ -5,7 +5,7 @@ namespace Burton.Core.Domain
 {
     public class ConfidenceRule : IPageRule
     {
-        private const float TOLERANCE = .8f;
+        private const float TOLERANCE = .85f;
         public List<WordOnPage> ApplyRule(List<WordOnPage> words)
         {
             return words.Where(w => w.Confidence > TOLERANCE).ToList();

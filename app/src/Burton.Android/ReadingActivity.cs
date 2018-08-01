@@ -21,7 +21,7 @@ namespace Burton.Android
         TextureView.ISurfaceTextureListener,
         TextToSpeech.IOnInitListener
     {
-        private const int OCR_REFRESH_FREQUENCY = 25;
+        private const int OCR_REFRESH_FREQUENCY = 15;
 
         private SurfaceTexture _surface;
         protected readonly ReadingFacade _reading;
@@ -43,15 +43,29 @@ namespace Burton.Android
             PermissionRequested += _camera.OnCameraPermissionFinished;
             PermissionRequested += _speechToText.OnMicrophonePermissionFinished;
 
+            var rules = new PageRules();
+            rules
+                .AddRule(new BoundingBoxSizeRule())
+                .AddRule(new ConfidenceRule())
+                .AddRule(new DictionaryWordsRule(Dictionary.GetAllEnglishWords()))
+                .AddFinalRule(new MinimumPageLengthRule());
+
             _camera.GeneratedPreviewImage += _ocr.CameraGeneratedPreviewImage;
-            //_ocr.CapturedText += (sender, args) => { _reading.SawNewWords(args.Words); };
             _ocr.CapturedText += (sender, args) =>
             {
-                Console.WriteLine("OCR_DEBUG: " +
-                    string.Join(
-                        " ", 
-                        args.Words.Select(w => w.Word)));
+                var actualWords = rules.ApplyRules(args.Words);
+                if (actualWords.Count > 0)
+                {
+                    _reading.SawNewWords(args.Words);
+                }
             };
+            //_ocr.CapturedText += (sender, args) =>
+            //{
+            //    Console.WriteLine("OCR_DEBUG: " +
+            //        string.Join(
+            //            " ", 
+            //            args.Words.Select(w => w.Word)));
+            //};
 
             //_speechToText.WordCaptured += (sender, args) => { _reading.HeardSpokenWord(args.Word); };
         }

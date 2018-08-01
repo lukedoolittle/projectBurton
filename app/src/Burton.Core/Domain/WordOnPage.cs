@@ -8,5 +8,7 @@ namespace Burton.Core.Domain
         public Rectangle Location { get; set; }
 
         public float Confidence { get; set; }
+
+        public bool? IsDictionaryWord { get; set; }
     }
 }

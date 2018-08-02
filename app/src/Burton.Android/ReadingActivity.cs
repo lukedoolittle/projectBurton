@@ -21,8 +21,6 @@ namespace Burton.Android
         TextureView.ISurfaceTextureListener,
         TextToSpeech.IOnInitListener
     {
-        private const int OCR_REFRESH_FREQUENCY = 60;
-
         private SurfaceTexture _surface;
         protected readonly ReadingFacade _reading;
         private readonly AndroidCameraProxy _camera;
@@ -34,11 +32,19 @@ namespace Burton.Android
 
         public ReadingActivity()
         {
-            _camera = new AndroidCameraProxy(this, OCR_REFRESH_FREQUENCY);
+            _camera = new AndroidCameraProxy(
+                this, 
+                PerformanceConstants.Framerate);
             _textToSpeech = new AndroidTextToSpeechProxy(this);
             _speechToText = new AndroidSpeechToTextProxy(this);
-            _ocr = new OpticalCharacterRecognition(TinyIoCContainer.Current.Resolve<ITesseractApi>());
-            _reading = new ReadingFacade(new Viewport(), new ReadingSession { StartTime = DateTimeOffset.Now });
+            _ocr = new OpticalCharacterRecognition(
+                TinyIoCContainer.Current.Resolve<ITesseractApi>());
+            _reading = new ReadingFacade(
+                new Viewport(),
+                new ReadingSession
+                {
+                    StartTime = DateTimeOffset.Now
+                });
         }
 
         protected override void OnCreate(Bundle savedInstanceState)
@@ -53,7 +59,7 @@ namespace Burton.Android
                 .AddRule(new BoundingBoxSizeRule())
                 .AddRule(new ConfidenceRule())
                 .AddRule(new DictionaryWordsRule(Dictionary.GetAllEnglishWords()))
-                .AddFinalRule(new MinimumPageLengthRule());
+                .AddFinalRule(new FinalRule());
 
             _camera.GeneratedPreviewImage += _ocr.CameraGeneratedPreviewImage;
             //_ocr.CapturedText += (sender, args) =>

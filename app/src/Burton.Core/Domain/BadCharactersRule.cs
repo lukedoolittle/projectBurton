@@ -11,7 +11,10 @@ namespace Burton.Core.Domain
         };
         public List<WordOnPage> ApplyRule(List<WordOnPage> words)
         {
-            return words.Where(w => !_badChars.Any(c => w.Word.Contains(c))).ToList();
+            return words
+                .Where(w => !_badChars
+                    .Any(c => w.Word.TrimEnd('.').Contains(c)))
+                .ToList();
         }
     }
 }

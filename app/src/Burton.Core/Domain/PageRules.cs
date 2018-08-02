@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Burton.Core.Domain
 {
@@ -30,10 +31,9 @@ namespace Burton.Core.Domain
                 remainingWords = rule.ApplyRule(remainingWords);
             }
 
-            return _finalRule != null ? 
-                _finalRule.ApplyRule(remainingWords) : 
+            return _finalRule != null ?
+                _finalRule.ApplyRule(remainingWords) :
                 remainingWords;
         }
-
     }
 }

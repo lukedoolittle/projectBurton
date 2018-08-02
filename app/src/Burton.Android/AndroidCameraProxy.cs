@@ -39,10 +39,11 @@ namespace Burton.Android
                 {
 #pragma warning disable CS0618 // Type or member is obsolete
                     __camera = Camera.Open();
-#pragma warning restore CS0618 // Type or member is obsolete
                     var param = __camera.GetParameters();
-#pragma warning disable CS0618 // Type or member is obsolete
                     param.FocusMode = Camera.Parameters.FocusModeContinuousPicture;
+                    param.FlashMode = Camera.Parameters.FlashModeTorch;
+                    //param.PreviewFrameRate = 30;
+                    //param.PreviewFormat = ImageFormatType.Jpeg;
 #pragma warning restore CS0618 // Type or member is obsolete
                     __camera.SetParameters(param);
                 }
@@ -113,7 +114,6 @@ namespace Burton.Android
             if (surface == null) throw new ArgumentNullException(nameof(surface));
 
             _camera.SetPreviewTexture(surface);
-            _camera.SetParameters(Camera.Parameters.);
             _camera.SetPreviewCallback(this);
             _camera.StartPreview();
         }
@@ -157,14 +157,18 @@ namespace Burton.Android
 
                 //src.Get(0, 0, data);
 
+                var formattedData = data.ImageToJpeg(
+                    parameters.PreviewSize.Width,
+                    parameters.PreviewSize.Height,
+                    parameters.PreviewFormat);
+
+                //var formattedData = data;
+
                 GeneratedPreviewImage?.Invoke(
                     this,
                     new PreviewImageEventArgs
                     {
-                        Image = data.ImageToJpeg(
-                            parameters.PreviewSize.Width,
-                            parameters.PreviewSize.Height,
-                            parameters.PreviewFormat)
+                        Image = formattedData
                     });
             }
         }

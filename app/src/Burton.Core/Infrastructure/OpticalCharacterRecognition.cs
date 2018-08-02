@@ -28,6 +28,7 @@ namespace Burton.Core.Infrastructure
                 {
                     var words = _tesseract
                         .Results(PageIteratorLevel.Word)
+                        .Where(r => !string.IsNullOrEmpty(r.Text))
                         .Select(r => new WordOnPage
                         {
                             Word = r.Text.ToLower(),

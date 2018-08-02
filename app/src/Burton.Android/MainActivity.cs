@@ -6,6 +6,7 @@ using Android.Graphics;
 using Android.Widget;
 using Android.OS;
 using Android.Views;
+using Burton.Core.Common;
 using Burton.Core.Domain;
 using Tesseract;
 
@@ -63,10 +64,12 @@ namespace Burton.Android
             //    .AddRule(new DictionaryWordsRule(Dictionary.GetAllEnglishWords()))
 
             rules.AddRule(new BadCharactersRule())
+                .AddRule(new LabelDictionaryWordsRule(Dictionary.GetAllEnglishWords()))
                 .AddRule(new ConfidenceRule())
                 .AddRule(new SingleCharactersRule())
                 .AddRule(new ExtremeSizeBoundingBoxRule())
-                .AddFinalRule(new MinimumPageLengthRule());
+                .AddRule(new RectangularBoundingBoxRule())
+                .AddFinalRule(new FinalRule());
 
             _ocr.CapturedText += (sender, args) =>
             {
@@ -85,11 +88,11 @@ namespace Burton.Android
             var canvas = _surfaceView.Holder.LockCanvas();
             canvas.DrawColor(Color.Transparent, PorterDuff.Mode.Clear);
             var rectangles = resultLocations.Select(r =>
-                new Rect(new Rect(
-                    (int) r.Left,
-                    (int) r.Top,
-                    (int) r.Right,
-                    (int) r.Bottom)));
+                new Rect(
+                    (int) (r.Left + PerformanceConstants.BoundingBoxXOffset - PerformanceConstants.BoundingBoxWidthInflation/2),
+                    (int) (r.Top + PerformanceConstants.BoundingBoxYOffset - PerformanceConstants.BoundingBoxHeightInflation / 2),
+                    (int) (r.Right + PerformanceConstants.BoundingBoxXOffset + PerformanceConstants.BoundingBoxWidthInflation / 2),
+                    (int) (r.Bottom + PerformanceConstants.BoundingBoxYOffset + PerformanceConstants.BoundingBoxHeightInflation / 2))));
             foreach (var rectangle in rectangles)
             {
                 canvas.DrawRect(rectangle, paint);
@@ -106,10 +109,10 @@ namespace Burton.Android
             var canvas = _surfaceView.Holder.LockCanvas();
             canvas.DrawColor(Color.Transparent, PorterDuff.Mode.Clear);
             var rectangle = new Rect(
-                (int)resultLocation.Left, 
-                (int)resultLocation.Top, 
-                (int)resultLocation.Right, 
-                (int)resultLocation.Bottom);
+                    (int)(resultLocation.Left + PerformanceConstants.BoundingBoxXOffset - PerformanceConstants.BoundingBoxWidthInflation / 2),
+                    (int)(resultLocation.Top + PerformanceConstants.BoundingBoxYOffset - PerformanceConstants.BoundingBoxHeightInflation / 2),
+                    (int)(resultLocation.Right + PerformanceConstants.BoundingBoxXOffset + PerformanceConstants.BoundingBoxWidthInflation / 2),
+                    (int)(resultLocation.Bottom + PerformanceConstants.BoundingBoxYOffset + PerformanceConstants.BoundingBoxHeightInflation / 2))));
             canvas.DrawRect(rectangle, paint);
             _surfaceView.Holder.UnlockCanvasAndPost(canvas);
         }

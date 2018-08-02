@@ -11,6 +11,8 @@ namespace Burton.Core.Infrastructure
     {
         public event EventHandler<CapturedTextEventArgs> CapturedText;
         private readonly ITesseractApi _tesseract;
+        private bool _isProcessingImage = false;
+        private static object _processingImageLock = new object();
 
         public OpticalCharacterRecognition(ITesseractApi tesseract)
         {
@@ -21,28 +23,40 @@ namespace Burton.Core.Infrastructure
             object sender, 
             PreviewImageEventArgs e)
         {
-            //todo: probably we should check here for initialization
-            if (await _tesseract.SetImage(e.Image).ConfigureAwait(false))
+            lock (_processingImageLock)
             {
-                if (!string.IsNullOrEmpty(_tesseract.Text))
+                if (_isProcessingImage)
                 {
-                    var words = _tesseract
-                        .Results(PageIteratorLevel.Word)
-                        .Where(r => !string.IsNullOrEmpty(r.Text))
-                        .Select(r => new WordOnPage
-                        {
-                            Word = r.Text.ToLower(),
-                            Location = r.Box,
-                            Confidence = r.Confidence
-                        })
-                        .ToList();
-                    CapturedText?.Invoke(
-                        this,
-                        new CapturedTextEventArgs
-                        {
-                            Words = words
-                        });
+                    return;
                 }
+                else
+                {
+                    _isProcessingImage = true;
+                }
+            }
+
+            await _tesseract.SetImage(e.Image).ConfigureAwait(false);
+
+            _isProcessingImage = false;
+
+            if (!string.IsNullOrEmpty(_tesseract.Text))
+            {
+                var words = _tesseract
+                    .Results(PageIteratorLevel.Word)
+                    .Where(r => !string.IsNullOrEmpty(r.Text))
+                    .Select(r => new WordOnPage
+                    {
+                        Word = r.Text.ToLower(),
+                        Location = r.Box,
+                        Confidence = r.Confidence
+                    })
+                    .ToList();
+                CapturedText?.Invoke(
+                    this,
+                    new CapturedTextEventArgs
+                    {
+                        Words = words
+                    });
             }
         }
 
@@ -52,7 +66,7 @@ namespace Burton.Core.Infrastructure
             {
                 await _tesseract.Init(
                     "eng",
-                    OcrEngineMode.TesseractCubeCombined);
+                    OcrEngineMode.TesseractOnly);
                 _tesseract.SetPageSegmentationMode(PageSegmentationMode.SingleBlock); //maybe AutoOnly
                 _tesseract.SetWhitelist("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890");
             }

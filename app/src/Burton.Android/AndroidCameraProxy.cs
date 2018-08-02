@@ -1,13 +1,10 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Android;
 using Android.Graphics;
 using Android.OS;
 using Burton.Core.Common;
-using OpenCV.Android;
-using OpenCV.Core;
-using OpenCV.ImgCodecs;
-using OpenCV.ImgProc;
 using Permission = Android.Content.PM.Permission;
 #pragma warning disable 618
 using Camera = Android.Hardware.Camera;

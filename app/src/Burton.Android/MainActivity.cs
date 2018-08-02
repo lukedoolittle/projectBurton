@@ -60,8 +60,6 @@ namespace Burton.Android
             };
 
             var rules = new PageRules();
-            //rules
-            //    .AddRule(new DictionaryWordsRule(Dictionary.GetAllEnglishWords()))
 
             rules.AddRule(new BadCharactersRule())
                 .AddRule(new LabelDictionaryWordsRule(Dictionary.GetAllEnglishWords()))
@@ -75,7 +73,10 @@ namespace Burton.Android
             {
                 var validWords = rules.ApplyRules(args.Words);
                 var output = string.Join(" ", validWords.Select(w => w.Word));
-                DrawWordBoundingBoxes(validWords.Select(w => w.Location));
+                if (validWords.Count > 0)
+                {
+                    DrawWordBoundingBoxes(validWords.Select(w => w.Location));
+                }
             };
         }
 
@@ -92,7 +93,7 @@ namespace Burton.Android
                     (int) (r.Left + PerformanceConstants.BoundingBoxXOffset - PerformanceConstants.BoundingBoxWidthInflation/2),
                     (int) (r.Top + PerformanceConstants.BoundingBoxYOffset - PerformanceConstants.BoundingBoxHeightInflation / 2),
                     (int) (r.Right + PerformanceConstants.BoundingBoxXOffset + PerformanceConstants.BoundingBoxWidthInflation / 2),
-                    (int) (r.Bottom + PerformanceConstants.BoundingBoxYOffset + PerformanceConstants.BoundingBoxHeightInflation / 2))));
+                    (int) (r.Bottom + PerformanceConstants.BoundingBoxYOffset + PerformanceConstants.BoundingBoxHeightInflation / 2)));
             foreach (var rectangle in rectangles)
             {
                 canvas.DrawRect(rectangle, paint);
@@ -102,7 +103,7 @@ namespace Burton.Android
 
         private void DrawWordBoundingBox(Rectangle resultLocation)
         {
-            var paint = new Paint {Color = Color.Red};
+            var paint = new Paint {Color = Color.Green};
             paint.SetStyle(Paint.Style.Stroke);
             paint.StrokeWidth = 2f;
 
@@ -112,7 +113,7 @@ namespace Burton.Android
                     (int)(resultLocation.Left + PerformanceConstants.BoundingBoxXOffset - PerformanceConstants.BoundingBoxWidthInflation / 2),
                     (int)(resultLocation.Top + PerformanceConstants.BoundingBoxYOffset - PerformanceConstants.BoundingBoxHeightInflation / 2),
                     (int)(resultLocation.Right + PerformanceConstants.BoundingBoxXOffset + PerformanceConstants.BoundingBoxWidthInflation / 2),
-                    (int)(resultLocation.Bottom + PerformanceConstants.BoundingBoxYOffset + PerformanceConstants.BoundingBoxHeightInflation / 2))));
+                    (int)(resultLocation.Bottom + PerformanceConstants.BoundingBoxYOffset + PerformanceConstants.BoundingBoxHeightInflation / 2));
             canvas.DrawRect(rectangle, paint);
             _surfaceView.Holder.UnlockCanvasAndPost(canvas);
         }

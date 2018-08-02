@@ -33,12 +33,6 @@ namespace Burton.Android
 		public partial class Attribute
 		{
 			
-			// aapt resource value: 0x7f010001
-			public const int camera_id = 2130771969;
-			
-			// aapt resource value: 0x7f010000
-			public const int show_fps = 2130771968;
-			
 			static Attribute()
 			{
 				global::Android.Runtime.ResourceIdManager.UpdateIdValues();
@@ -52,20 +46,11 @@ namespace Burton.Android
 		public partial class Id
 		{
 			
-			// aapt resource value: 0x7f040000
-			public const int any = 2130968576;
-			
 			// aapt resource value: 0x7f040001
-			public const int back = 2130968577;
+			public const int surfaceview = 2130968577;
 			
-			// aapt resource value: 0x7f040002
-			public const int front = 2130968578;
-			
-			// aapt resource value: 0x7f040004
-			public const int surfaceview = 2130968580;
-			
-			// aapt resource value: 0x7f040003
-			public const int textureView = 2130968579;
+			// aapt resource value: 0x7f040000
+			public const int textureView = 2130968576;
 			
 			static Id()
 			{
@@ -111,29 +96,6 @@ namespace Burton.Android
 			}
 			
 			private String()
-			{
-			}
-		}
-		
-		public partial class Styleable
-		{
-			
-			public static int[] CameraBridgeViewBase = new int[] {
-					2130771968,
-					2130771969};
-			
-			// aapt resource value: 1
-			public const int CameraBridgeViewBase_camera_id = 1;
-			
-			// aapt resource value: 0
-			public const int CameraBridgeViewBase_show_fps = 0;
-			
-			static Styleable()
-			{
-				global::Android.Runtime.ResourceIdManager.UpdateIdValues();
-			}
-			
-			private Styleable()
 			{
 			}
 		}

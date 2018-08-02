@@ -54,13 +54,6 @@ namespace Burton.Android
             PermissionRequested += _camera.OnCameraPermissionFinished;
             PermissionRequested += _speechToText.OnMicrophonePermissionFinished;
 
-            var rules = new PageRules();
-            rules
-                .AddRule(new BoundingBoxSizeRule())
-                .AddRule(new ConfidenceRule())
-                .AddRule(new DictionaryWordsRule(Dictionary.GetAllEnglishWords()))
-                .AddFinalRule(new FinalRule());
-
             _camera.GeneratedPreviewImage += _ocr.CameraGeneratedPreviewImage;
             //_ocr.CapturedText += (sender, args) =>
             //{
@@ -71,7 +64,10 @@ namespace Burton.Android
             //    }
             //};
 
-            _speechToText.WordCaptured += (sender, args) => { _reading.HeardSpokenWord(args.Word); };
+            _speechToText.WordCaptured += (sender, args) =>
+            {
+                _reading.HeardSpokenWord(args.Word);
+            };
         }
 
         public void Speak(string message)

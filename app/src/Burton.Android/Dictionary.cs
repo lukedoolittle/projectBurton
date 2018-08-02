@@ -1,16 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-
-using Android.App;
-using Android.Content;
-using Android.Content.Res;
-using Android.OS;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
 
 namespace Burton.Android
 {
@@ -25,7 +15,7 @@ namespace Burton.Android
                 content = sr.ReadToEnd();
             }
 
-            return content.Split('\n').ToList();
+            return content.Split('\n').Select(s => s.TrimEnd('\r')).ToList();
         }
     }
 }

@@ -17,7 +17,7 @@ namespace Burton.Core.Domain
                     CurrentPage.Words[currentWordIndex+1];
         }
 
-        public void ChangePage(List<WordOnPage> words)
+        public void AlterPage(List<WordOnPage> words)
         {
             //if there is no current page then we just started
             //make the words the current page
@@ -25,6 +25,7 @@ namespace Burton.Core.Domain
             {
                 CurrentPage = new Page
                 {
+                    PageNumber = 1,
                     Words = words,
                     ActiveWord = words.First()
                 };
@@ -41,6 +42,7 @@ namespace Burton.Core.Domain
                 {
                     CurrentPage = new Page
                     {
+                        PageNumber = CurrentPage.PageNumber + 1,
                         Words = words,
                         ActiveWord = words.First()
                     };
@@ -52,6 +54,11 @@ namespace Burton.Core.Domain
                     {
                         CurrentPage.Words[i].Location = words[i].Location;
                     }
+                }
+                else if (CurrentPage.AreWordsSupersetOfCurrentPage(words))
+                {
+                    CurrentPage.Words = words;
+                    CurrentPage.ActiveWord = words.First(w => w.Word == CurrentPage.ActiveWord.Word);
                 }
             }
         }

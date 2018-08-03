@@ -5,7 +5,7 @@ using Burton.Core.Domain;
 
 namespace Burton.Core.Common
 {
-    public class ChangedActiveWordEventArgs
+    public class ChangedOrMovedActiveWordEventArgs
     {
         public WordOnPage NewActiveWord { get; set; }
     }

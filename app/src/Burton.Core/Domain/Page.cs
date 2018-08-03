@@ -25,5 +25,15 @@ namespace Burton.Core.Domain
 
             return !firstNotSecond.Any() && !secondNotFirst.Any();
         }
+
+        public bool AreWordsSubsetOfCurrentPage(List<WordOnPage> words)
+        {
+            return words.All(i => Words.Contains(i));
+        }
+
+        public bool AreWordsSupersetOfCurrentPage(List<WordOnPage> words)
+        {
+            return Words.All(i => words.Contains(i));
+        }
     }
 }

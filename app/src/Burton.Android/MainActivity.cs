@@ -54,9 +54,9 @@ namespace Burton.Android
             
             //_speechToText.StartListening();
 
-            _reading.ChangedActiveWord += (sender, args) =>
+            _reading.ChangedOrMovedActiveWord += (sender, args) =>
             {
-                DrawWordBoundingBox(args.NewActiveWord.Location);
+                DrawWordUnderline(args.NewActiveWord.Location);
             };
 
             var rules = new PageRules();
@@ -75,9 +75,28 @@ namespace Burton.Android
                 var output = string.Join(" ", validWords.Select(w => w.Word));
                 if (validWords.Count > 0)
                 {
-                    DrawWordBoundingBoxes(validWords.Select(w => w.Location));
+                    _reading.SawNewWords(validWords);
+                    //DrawWordBoundingBoxes(validWords.Select(w => w.Location));
                 }
             };
+        }
+
+        private void DrawWordUnderline(Rectangle resultLocation)
+        {
+            var paint = new Paint { Color = Color.Red };
+            paint.SetStyle(Paint.Style.Stroke);
+            paint.StrokeWidth = 8f;
+
+            var canvas = _surfaceView.Holder.LockCanvas();
+            canvas.DrawColor(Color.Transparent, PorterDuff.Mode.Clear);
+
+            canvas.DrawLine(
+                resultLocation.X + PerformanceConstants.BoundingBoxXOffset - PerformanceConstants.BoundingBoxWidthInflation / 2, 
+                resultLocation.Bottom + PerformanceConstants.BoundingBoxYOffset, 
+                resultLocation.X + resultLocation.Width + PerformanceConstants.BoundingBoxXOffset + PerformanceConstants.BoundingBoxWidthInflation / 2,
+                resultLocation.Bottom + PerformanceConstants.BoundingBoxYOffset,
+                paint);
+            _surfaceView.Holder.UnlockCanvasAndPost(canvas);
         }
 
         private void DrawWordBoundingBoxes(IEnumerable<Rectangle> resultLocations)
@@ -103,7 +122,7 @@ namespace Burton.Android
 
         private void DrawWordBoundingBox(Rectangle resultLocation)
         {
-            var paint = new Paint {Color = Color.Green};
+            var paint = new Paint {Color = Color.BlueViolet};
             paint.SetStyle(Paint.Style.Stroke);
             paint.StrokeWidth = 2f;
 

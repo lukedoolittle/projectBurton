@@ -55,14 +55,6 @@ namespace Burton.Android
             PermissionRequested += _speechToText.OnMicrophonePermissionFinished;
 
             _camera.GeneratedPreviewImage += _ocr.CameraGeneratedPreviewImage;
-            //_ocr.CapturedText += (sender, args) =>
-            //{
-            //    var actualWords = rules.ApplyRules(args.Words);
-            //    if (actualWords.Count > 0)
-            //    {
-            //        _reading.SawNewWords(args.Words);
-            //    }
-            //};
 
             _speechToText.WordCaptured += (sender, args) =>
             {

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Android;
 using Android.App;
 using Android.Content;
+using Android.Media;
 using Android.OS;
 using Android.Runtime;
 using Android.Speech;
@@ -150,6 +151,18 @@ namespace Burton.Android
                         new CapturedWordEventArgs { Word = newWord });
                 }
             }
+        }
+
+        private static void MuteAudio()
+        {
+            var amanager = (AudioManager)MainApplication.CurrentActivity.GetSystemService(Context.AudioService);
+            amanager.SetStreamMute(Stream.Music, true);
+        }
+
+        private static void UnmuteAudio()
+        {
+            var amanager = (AudioManager)MainApplication.CurrentActivity.GetSystemService(Context.AudioService);
+            amanager.SetStreamMute(Stream.Music, false);
         }
 
         public void OnEvent(int eventType, Bundle @params)

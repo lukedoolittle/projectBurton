@@ -9,10 +9,11 @@ namespace Burton.Core.Infrastructure
     
     public class ReadingFacade
     {
+        private static readonly object WORD_LOCK = new object();
         private readonly Viewport _view;
         private readonly ReadingSession _readingSession;
 
-        public event EventHandler<ChangedActiveWordEventArgs> ChangedActiveWord;
+        public event EventHandler<ChangedOrMovedActiveWordEventArgs> ChangedOrMovedActiveWord;
 
         public ReadingFacade(
             Viewport view, 
@@ -24,36 +25,42 @@ namespace Burton.Core.Infrastructure
 
         public void HeardSpokenWord(string spokenWord)
         {
-            _readingSession.SpeechPerformances.Add(
-                new SpeechPerformance
-                {
-                    ExpectedWord = _view.CurrentPage.ActiveWord.Word,
-                    ActualWord = spokenWord,
-                    IsPhonemicallyCorrect = _view.CurrentPage.ActiveWord.Word == spokenWord,
-                    IsPhonicallyCorrect = _view.CurrentPage.ActiveWord.Word == spokenWord
-                });
+            lock (WORD_LOCK)
+            {
+                _readingSession.SpeechPerformances.Add(
+                    new SpeechPerformance
+                    {
+                        ExpectedWord = _view.CurrentPage.ActiveWord.Word,
+                        ActualWord = spokenWord,
+                        IsPhonemicallyCorrect = _view.CurrentPage.ActiveWord.Word == spokenWord,
+                        IsPhonicallyCorrect = _view.CurrentPage.ActiveWord.Word == spokenWord
+                    });
 
-            //TODO: in some cases this will not be true (corrective workflow) but for current just advance the word
-            _view.AdvanceCurrentWord();
+                //TODO: in some cases this will not be true (corrective workflow) but for current just advance the word
+                _view.AdvanceCurrentWord();
 
-            ChangedActiveWord?.Invoke(
-                this,
-                new ChangedActiveWordEventArgs
-                {
-                    NewActiveWord = _view.CurrentPage.ActiveWord
-                });
+                ChangedOrMovedActiveWord?.Invoke(
+                    this,
+                    new ChangedOrMovedActiveWordEventArgs
+                    {
+                        NewActiveWord = _view.CurrentPage.ActiveWord
+                    });
+            }
         }
 
         public void SawNewWords(List<WordOnPage> words)
         {
-            _view.ChangePage(words);
+            lock (WORD_LOCK)
+            {
+                _view.AlterPage(words);
 
-            ChangedActiveWord?.Invoke(
-                this,
-                new ChangedActiveWordEventArgs
-                {
-                    NewActiveWord = _view.CurrentPage.ActiveWord
-                });
+                ChangedOrMovedActiveWord?.Invoke(
+                    this,
+                    new ChangedOrMovedActiveWordEventArgs
+                    {
+                        NewActiveWord = _view.CurrentPage.ActiveWord
+                    });
+            }
         }
     }
 }

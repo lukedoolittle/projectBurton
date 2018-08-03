@@ -27,6 +27,13 @@ namespace Burton.Core.Infrastructure
         {
             lock (WORD_LOCK)
             {
+                //if there is no active word we cannot evaluate performance
+                //nor advance the current word
+                if (_view.CurrentPage.ActiveWord == null)
+                {
+                    return;
+                }
+
                 _readingSession.SpeechPerformances.Add(
                     new SpeechPerformance
                     {

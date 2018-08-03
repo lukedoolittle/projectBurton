@@ -51,12 +51,23 @@ namespace Burton.Android
 #pragma warning disable 4014
             RequestVoice(); //todo: figure out why we can't make await this call
 #pragma warning restore 4014
-            
-            //_speechToText.StartListening();
 
             _reading.ChangedOrMovedActiveWord += (sender, args) =>
             {
-                DrawWordUnderline(args.NewActiveWord.Location);
+                if (args.NewActiveWord != null && !_speechToText.IsListening)
+                {
+                    _speechToText.StartListening();
+                }
+
+                if (args.NewActiveWord == null)
+                {
+                    ClearCanvas();
+                    _speechToText.StopListening();
+                }
+                else
+                {
+                    DrawWordUnderline(args.NewActiveWord.Location);
+                }
             };
 
             var rules = new PageRules();
@@ -72,13 +83,20 @@ namespace Burton.Android
             _ocr.CapturedText += (sender, args) =>
             {
                 var validWords = rules.ApplyRules(args.Words);
-                var output = string.Join(" ", validWords.Select(w => w.Word));
+                //var output = string.Join(" ", validWords.Select(w => w.Word));
                 if (validWords.Count > 0)
                 {
                     _reading.SawNewWords(validWords);
                     //DrawWordBoundingBoxes(validWords.Select(w => w.Location));
                 }
             };
+        }
+
+        private void ClearCanvas()
+        {
+            var canvas = _surfaceView.Holder.LockCanvas();
+            canvas.DrawColor(Color.Transparent, PorterDuff.Mode.Clear);
+            _surfaceView.Holder.UnlockCanvasAndPost(canvas);
         }
 
         private void DrawWordUnderline(Rectangle resultLocation)

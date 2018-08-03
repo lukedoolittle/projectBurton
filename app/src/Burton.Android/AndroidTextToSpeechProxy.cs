@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Android.Content;
+using Android.Media;
 using Android.Speech.Tts;
 
 namespace Burton.Android
@@ -82,10 +84,12 @@ namespace Burton.Android
             }
 
 #pragma warning disable 618
+            UnmuteAudio();
             _textToSpeech.Speak(
                 message,
                 QueueMode.Flush,
                 null);
+            MuteAudio();
 #pragma warning restore 618
         }
 
@@ -98,6 +102,18 @@ namespace Burton.Android
                 _textToSpeech.SetVoice(_textToSpeech.Voices.Single(v => v.Name == _speakerName));
                 _languageReadySource.SetResult(true);
             }
+        }
+
+        private static void MuteAudio()
+        {
+            var amanager = (AudioManager)MainApplication.CurrentActivity.GetSystemService(Context.AudioService);
+            amanager.SetStreamMute(Stream.Music, true);
+        }
+
+        private static void UnmuteAudio()
+        {
+            var amanager = (AudioManager)MainApplication.CurrentActivity.GetSystemService(Context.AudioService);
+            amanager.SetStreamMute(Stream.Music, false);
         }
     }
 }

@@ -33,6 +33,8 @@ namespace Burton.Android
         public event EventHandler<CapturedWordEventArgs> WordCaptured;
         public event EventHandler<WordTimeoutEventArgs> WordTimeout;
 
+        public bool IsListening = false;
+
         public Task<bool> CanAccessMicrophone()
         {
             if (global::Android.Content.PM.PackageManager.FeatureMicrophone != "android.hardware.microphone")
@@ -99,13 +101,14 @@ namespace Burton.Android
 
         public void StartListening()
         {
+            IsListening = true;
             _speech.StartListening(_speechIntent);
         }
 
         public void StopListening()
         {
             _partialResults = string.Empty;
-
+            IsListening = false;
             _speech.StopListening();
         }
 
@@ -115,6 +118,7 @@ namespace Burton.Android
 
             if (error == SpeechRecognizerError.SpeechTimeout)
             {
+                IsListening = false;
                 WordTimeout?.Invoke(
                     this,
                     new WordTimeoutEventArgs());
@@ -153,17 +157,7 @@ namespace Burton.Android
             }
         }
 
-        private static void MuteAudio()
-        {
-            var amanager = (AudioManager)MainApplication.CurrentActivity.GetSystemService(Context.AudioService);
-            amanager.SetStreamMute(Stream.Music, true);
-        }
 
-        private static void UnmuteAudio()
-        {
-            var amanager = (AudioManager)MainApplication.CurrentActivity.GetSystemService(Context.AudioService);
-            amanager.SetStreamMute(Stream.Music, false);
-        }
 
         public void OnEvent(int eventType, Bundle @params)
         {
@@ -179,6 +173,11 @@ namespace Burton.Android
 
         public void OnEndOfSpeech()
         {
+            _partialResults = string.Empty;
+            IsListening = false;
+            WordTimeout?.Invoke(
+                this,
+                new WordTimeoutEventArgs());
         }
 
         public void OnReadyForSpeech(Bundle @params)

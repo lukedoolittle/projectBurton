@@ -16,11 +16,13 @@ namespace Burton.Core.Domain
         /// <summary>
         /// Track current history of performed words
         /// </summary>
-        public List<SpeechPerformance> SpeechPerformances { get; set; }
+        public List<SpeechPerformance> SpeechPerformances { get; set; } = 
+            new List<SpeechPerformance>();
 
         /// <summary>
         /// Track current history of prompted questions (vocabulary or comprehension)
         /// </summary>
-        public List<QuestionPerformance> QuestionPerformances { get; set; }
+        public List<QuestionPerformance> QuestionPerformances { get; set; } = 
+            new List<QuestionPerformance>();
     }
 }

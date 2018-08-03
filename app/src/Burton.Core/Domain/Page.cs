@@ -9,6 +9,7 @@ namespace Burton.Core.Domain
         public int PageNumber { get; set; }
         public List<WordOnPage> Words { get; set; }
         public WordOnPage ActiveWord { get; set; }
+        public bool IsFirstWordOnPage => Words.First() == ActiveWord;
 
         /// <summary>
         /// Adjusts the current words and locations if the page is the same

@@ -12,7 +12,7 @@ namespace Burton.Core.Domain
             var currentWordIndex = CurrentPage.Words.IndexOf(CurrentPage.ActiveWord);
 
             CurrentPage.ActiveWord = 
-                currentWordIndex == CurrentPage.Words.Count ? 
+                currentWordIndex == CurrentPage.Words.Count - 1 ? 
                     null : 
                     CurrentPage.Words[currentWordIndex+1];
         }
@@ -55,6 +55,8 @@ namespace Burton.Core.Domain
                         CurrentPage.Words[i].Location = words[i].Location;
                     }
                 }
+                //if we got a superset of the words on the page then adjust the page to
+                //contain the superset
                 else if (CurrentPage.AreWordsSupersetOfCurrentPage(words))
                 {
                     CurrentPage.Words = words;

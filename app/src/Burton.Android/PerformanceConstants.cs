@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Burton.Core.Common
+﻿namespace Burton.Android
 {
     public static class PerformanceConstants
     {
@@ -11,6 +7,6 @@ namespace Burton.Core.Common
         public static float BoundingBoxYOffset { get; } = -5;
         public static float BoundingBoxHeightInflation { get; } = 30;
         public static float BoundingBoxWidthInflation { get; } = 25;
-        public static int PageTurnDelayTimeInMs { get; } = 4000;
+        public static int PageTurnDelayTimeInMs { get; } = 5000;
     }
 }

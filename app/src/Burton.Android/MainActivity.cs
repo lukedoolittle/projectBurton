@@ -55,7 +55,6 @@ namespace Burton.Android
                 });
             };
 
-
             SetContentView(Resource.Layout.Main);
 
             _textureView = (TextureView)FindViewById(Resource.Id.textureView);
@@ -124,10 +123,11 @@ namespace Burton.Android
 
             _ocr.CapturedText += (sender, args) =>
             {
-                var validWords = rules.ApplyRules(args.Words);
-                if (validWords.Count > 0)
+                if (!_reading.IsTurningPage)
                 {
-                    _reading.SawNewWords(validWords);
+                    var actualWords = rules.ApplyRules(args.Words);
+                    _reading.SawNewWords(actualWords);
+                    DrawWordBoundingBoxes(actualWords.Select(w => w.Location));
                 }
             };
         }

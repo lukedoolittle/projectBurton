@@ -23,6 +23,8 @@ namespace Burton.Core.Infrastructure
             ? ReadingActivityMode.Reading
             : ReadingActivityMode.QuestionAnswering;
 
+        public bool IsTurningPage => _pageTurningState.IsTurningPage;
+
         public ReadingFacade(
             Viewport view, 
             ReadingSession readingSession,
@@ -135,6 +137,11 @@ namespace Burton.Core.Infrastructure
         {
             _view.AdvanceCurrentWord();
 
+            if (_view.CurrentPage.ActiveWord == null)
+            {
+                _pageTurningState.StartTurningPage();
+            }
+
             ChangedOrMovedActiveWord?.Invoke(
                 this,
                 new ChangedOrMovedActiveWordEventArgs
@@ -147,6 +154,10 @@ namespace Burton.Core.Infrastructure
         {
             lock (WORD_LOCK)
             {
+                if (words.Count == 0)
+                {
+                    return;
+                }
                 _view.AlterPage(words);
 
                 ChangedOrMovedActiveWord?.Invoke(

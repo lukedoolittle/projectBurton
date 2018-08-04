@@ -15,6 +15,7 @@ using Permission = Android.Content.PM.Permission;
 
 namespace Burton.Android
 {
+    //todo: reduce this to just permissions and move the rest into MainActivity
     [Activity(Label = "ReadingActivity")]
     public class ReadingActivity : 
         Activity, 

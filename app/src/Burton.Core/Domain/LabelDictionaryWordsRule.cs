@@ -4,9 +4,9 @@ namespace Burton.Core.Domain
 {
     public class LabelDictionaryWordsRule : IPageRule
     {
-        private readonly List<string> _dictionaryWords;
+        private readonly LanguageDictionary _dictionaryWords;
 
-        public LabelDictionaryWordsRule(List<string> dictionaryWords)
+        public LabelDictionaryWordsRule(LanguageDictionary dictionaryWords)
         {
             _dictionaryWords = dictionaryWords;
         }
@@ -15,7 +15,7 @@ namespace Burton.Core.Domain
         {
             foreach (var word in words)
             {
-                word.IsDictionaryWord = _dictionaryWords.Contains(word.Word.TrimEnd('.'));
+                word.IsDictionaryWord = _dictionaryWords.IsWordInDictionary(word.Word.TrimEnd('.'));
             }
 
             return words;

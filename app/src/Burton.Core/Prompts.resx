@@ -117,11 +117,17 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AskForWord" xml:space="preserve">
+    <value>What does this word say?</value>
+  </data>
   <data name="Continuation" xml:space="preserve">
     <value>Lets keep going!</value>
   </data>
   <data name="Correct" xml:space="preserve">
     <value>Thats correct!</value>
+  </data>
+  <data name="Correction" xml:space="preserve">
+    <value>This word is {0}</value>
   </data>
   <data name="Fail" xml:space="preserve">
     <value>Good try!</value>
@@ -130,16 +136,16 @@
     <value>Does this say {0}?</value>
   </data>
   <data name="PhonicCheck" xml:space="preserve">
-    <value>Can you say {0}?</value>
-  </data>
-  <data name="Retry" xml:space="preserve">
-    <value>What does this word say?</value>
+    <value>Now can you say {0}?</value>
   </data>
   <data name="Start" xml:space="preserve">
     <value>Lets get going!</value>
   </data>
   <data name="Success" xml:space="preserve">
     <value>Great job!</value>
+  </data>
+  <data name="Try" xml:space="preserve">
+    <value>Lets try one more time</value>
   </data>
   <data name="Wait" xml:space="preserve">
     <value>Wait just a minute</value>

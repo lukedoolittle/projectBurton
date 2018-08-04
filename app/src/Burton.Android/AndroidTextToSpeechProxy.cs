@@ -40,9 +40,11 @@ namespace Burton.Android
             }
         }
 
-        public AndroidTextToSpeechProxy(ReadingActivity speechActivity) :
+        public AndroidTextToSpeechProxy(
+            ReadingActivity speechActivity,
+            Java.Util.Locale language) :
             this(speechActivity, 
-                Java.Util.Locale.English, 
+                language, 
                 1.0f, 
                 1.0f,
                 "com.google.android.tts",

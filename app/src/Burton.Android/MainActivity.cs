@@ -45,7 +45,7 @@ namespace Burton.Android
             _textureView.LayoutParameters =
                 new RelativeLayout.LayoutParams(width, height);
 
-            await InitializeOCR();
+            await InitializeOcr();
             await RequestCameraPreview();
             await RequestMicrophoneAccess();
 #pragma warning disable 4014
@@ -73,7 +73,10 @@ namespace Burton.Android
             var rules = new PageRules();
 
             rules.AddRule(new BadCharactersRule())
-                .AddRule(new LabelDictionaryWordsRule(Dictionary.GetAllEnglishWords()))
+                .AddRule(new LabelDictionaryWordsRule(
+                    DictionaryFactory.GetAllWordsForLanguage(
+                        AndroidConstants.Language.ToLanguageTag(),
+                        this)))
                 .AddRule(new ConfidenceRule())
                 .AddRule(new SingleCharactersRule())
                 .AddRule(new ExtremeSizeBoundingBoxRule())

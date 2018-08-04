@@ -61,6 +61,15 @@ namespace Burton.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to What does this word say?.
+        /// </summary>
+        internal static string AskForWord {
+            get {
+                return ResourceManager.GetString("AskForWord", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Lets keep going!.
         /// </summary>
         internal static string Continuation {
@@ -75,6 +84,15 @@ namespace Burton.Core {
         internal static string Correct {
             get {
                 return ResourceManager.GetString("Correct", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This word is {0}.
+        /// </summary>
+        internal static string Correction {
+            get {
+                return ResourceManager.GetString("Correction", resourceCulture);
             }
         }
         
@@ -97,20 +115,11 @@ namespace Burton.Core {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Can you say {0}?.
+        ///   Looks up a localized string similar to Now can you say {0}?.
         /// </summary>
         internal static string PhonicCheck {
             get {
                 return ResourceManager.GetString("PhonicCheck", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to What does this word say?.
-        /// </summary>
-        internal static string Retry {
-            get {
-                return ResourceManager.GetString("Retry", resourceCulture);
             }
         }
         
@@ -129,6 +138,15 @@ namespace Burton.Core {
         internal static string Success {
             get {
                 return ResourceManager.GetString("Success", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Lets try one more time.
+        /// </summary>
+        internal static string Try {
+            get {
+                return ResourceManager.GetString("Try", resourceCulture);
             }
         }
         

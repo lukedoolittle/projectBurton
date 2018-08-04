@@ -25,6 +25,7 @@ namespace Burton.Android
         private SpeechRecognizer _speech;
         private Intent _speechIntent;
         private readonly ReadingActivity _readingActivity;
+        private readonly Java.Util.Locale _language;
         private TaskCompletionSource<bool> _permissionSource;
 
         private string _partialResults = string.Empty;
@@ -77,9 +78,12 @@ namespace Burton.Android
             }
         }
 
-        public AndroidSpeechToTextProxy(ReadingActivity context)
+        public AndroidSpeechToTextProxy(
+            ReadingActivity context,
+            Java.Util.Locale language)
         {
             _readingActivity = context;
+            _language = language;
             CreateIntent();
         }
 

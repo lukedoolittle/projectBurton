@@ -22,21 +22,27 @@ namespace Burton.Android
         TextToSpeech.IOnInitListener
     {
         private SurfaceTexture _surface;
-        protected readonly ReadingFacade _reading;
-        private readonly AndroidCameraProxy _camera;
-        private readonly AndroidTextToSpeechProxy _textToSpeech;
-        protected readonly AndroidSpeechToTextProxy _speechToText;
-        protected readonly OpticalCharacterRecognition _ocr;
+        protected ReadingFacade _reading;
+        private AndroidCameraProxy _camera;
+        private AndroidTextToSpeechProxy _textToSpeech;
+        protected AndroidSpeechToTextProxy _speechToText;
+        protected OpticalCharacterRecognition _ocr;
 
         public event EventHandler<PermissionResultEventArgs> PermissionRequested;
 
-        public ReadingActivity()
+        protected override void OnCreate(Bundle savedInstanceState)
         {
+            base.OnCreate(savedInstanceState);
+
             _camera = new AndroidCameraProxy(
-                this, 
+                this,
                 PerformanceConstants.Framerate);
-            _textToSpeech = new AndroidTextToSpeechProxy(this);
-            _speechToText = new AndroidSpeechToTextProxy(this);
+            _textToSpeech = new AndroidTextToSpeechProxy(
+                this,
+                AndroidConstants.Language);
+            _speechToText = new AndroidSpeechToTextProxy(
+                this,
+                AndroidConstants.Language);
             _ocr = new OpticalCharacterRecognition(
                 TinyIoCContainer.Current.Resolve<ITesseractApi>());
             _reading = new ReadingFacade(
@@ -44,12 +50,10 @@ namespace Burton.Android
                 new ReadingSession
                 {
                     StartTime = DateTimeOffset.Now
-                });
-        }
-
-        protected override void OnCreate(Bundle savedInstanceState)
-        {
-            base.OnCreate(savedInstanceState);
+                },
+                DictionaryFactory.GetAllWordsForLanguage(
+                    AndroidConstants.Language.ToLanguageTag(),
+                    this));
 
             PermissionRequested += _camera.OnCameraPermissionFinished;
             PermissionRequested += _speechToText.OnMicrophonePermissionFinished;
@@ -58,16 +62,27 @@ namespace Burton.Android
 
             _speechToText.WordCaptured += (sender, args) =>
             {
-                _reading.HeardSpokenWord(args.Word);
+                if (_speechToText.IsListening)
+                {
+                    _reading.HeardSpokenWord(args.Word);
+                }
+            };
+
+            _speechToText.WordTimeout += (sender, args) =>
+            {
+                if (_speechToText.IsListening)
+                {
+                    _reading.HeardSpokenWord(string.Empty);
+                }
+            };
+
+            _reading.SteppedInRegression += (sender, args) =>
+            {
+                _textToSpeech.Speak(args.Prompt);
             };
         }
 
-        public void Speak(string message)
-        {
-            _textToSpeech.Speak(message);
-        }
-
-        public Task InitializeOCR()
+        public Task InitializeOcr()
         {
             return _ocr.Initialize();
         }

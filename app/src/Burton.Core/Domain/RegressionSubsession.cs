@@ -6,6 +6,7 @@ namespace Burton.Core.Domain
     public class RegressionSubsession
     {
         private readonly LanguageDictionary _dictionary;
+        private readonly IPrompts _prompts;
         public string CurrentWord { get; }
         private string _testWord;
         public RegressionState State { get; private set; } = RegressionState.None;
@@ -19,11 +20,13 @@ namespace Burton.Core.Domain
         public RegressionSubsession(
             string currentWord,
             string originalAttempt,
-            LanguageDictionary dictionary)
+            LanguageDictionary dictionary,
+            IPrompts prompts)
         {
             CurrentWord = currentWord;
             OriginalAttempt = originalAttempt;
             _dictionary = dictionary;
+            _prompts = prompts;
         }
 
         public string AddressNextStep(string spokenWord)
@@ -31,7 +34,7 @@ namespace Burton.Core.Domain
             if (State == RegressionState.None)
             {
                 State = RegressionState.AskingForWord;
-                return Prompts.AskForWord;
+                return _prompts.AskForWord;
             }
 
             if (State == RegressionState.AskingForWord)
@@ -41,13 +44,13 @@ namespace Burton.Core.Domain
                     State = RegressionState.None;
                     IsPhonemicallyCorrect = true;
                     IsPhonicallyCorrect = true;
-                    return $"{Prompts.Correct} {Prompts.Continuation}";
+                    return $"{_prompts.Correct} {_prompts.Continuation}";
                 }
                 else
                 {
                     State = RegressionState.CheckingPhonemicCorrectness;
-                    SetTestWord();
-                    return $"{string.Format(Prompts.PhonemicCheck, _testWord)}";
+                    _testWord = GetTestWord();
+                    return $"{string.Format(_prompts.PhonemicCheck, _testWord)}";
                 }
             }
 
@@ -56,23 +59,28 @@ namespace Burton.Core.Domain
                 if (_testWord == CurrentWord && spokenWord == "yes")
                 {
                     State = RegressionState.CheckingPhonicCorrectness;
+                    _attempt = 1;
                     IsPhonemicallyCorrect = true;
-                    return $"{Prompts.Correct} {string.Format(Prompts.PhonicCheck, CurrentWord)}";
+                    return $"{_prompts.Correct}. {string.Format(_prompts.PhonicCheck, CurrentWord)}";
                 }
-                else if (_testWord == CurrentWord && spokenWord == "no")
+                else if (_testWord == CurrentWord && spokenWord != "yes")
                 {
                     State = RegressionState.CheckingPhonicCorrectness;
-                    return $"{Prompts.Fail} {string.Format(Prompts.PhonicCheck, CurrentWord)}";
+                    _attempt = 1;
+                    return $"{_prompts.Fail}. {string.Format(_prompts.PhonicCheck, CurrentWord)}";
                 }
                 else if (_testWord != CurrentWord && spokenWord == "yes")
                 {
                     State = RegressionState.CheckingPhonicCorrectness;
-                    return $"{string.Format(Prompts.Correction, CurrentWord)} {string.Format(Prompts.PhonicCheck, CurrentWord)}";
+                    _attempt = 1;
+                    return $"{string.Format(_prompts.Correction, CurrentWord)}. {string.Format(_prompts.PhonicCheck, CurrentWord)}";
                 }
                 else
                 {
-                    SetTestWord();
-                    return $"{string.Format(Prompts.PhonemicCheck, _testWord)}";
+                    _testWord = _attempt++ > 2 ? 
+                        CurrentWord : 
+                        GetTestWord();
+                    return $"{string.Format(_prompts.PhonemicCheck, _testWord)}";
                 }
             }
 
@@ -82,26 +90,27 @@ namespace Burton.Core.Domain
                 {
                     State = RegressionState.None;
                     IsPhonicallyCorrect = true;
-                    return $"{Prompts.Correct} {Prompts.Continuation}";
+                    return $"{_prompts.Correct}. {_prompts.Continuation}";
                 }
                 else if (_attempt < 2)
                 {
-                    return $"{Prompts.Try} {string.Format(Prompts.PhonicCheck, CurrentWord)}";
+                    _attempt++;
+                    return $"{_prompts.Try}. {string.Format(_prompts.PhonicCheck, CurrentWord)}";
                 }
                 else
                 {
                     State = RegressionState.None;
-                    return $"{Prompts.Fail} {Prompts.Continuation}";
+                    return $"{_prompts.Fail}. {_prompts.Continuation}";
                 }
             }
 
             throw new Exception();
         }
 
-        private void SetTestWord()
+        private string GetTestWord()
         {
-            _testWord = RandomNumberGenerator.RandomBoolean() ?
-                _dictionary.GetRandomWord() :
+            return RandomNumberGenerator.RandomBoolean() ? 
+                _dictionary.GetRandomWord() : 
                 CurrentWord;
         }
     }

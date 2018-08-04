@@ -24,7 +24,7 @@ namespace Burton.Android
         private SurfaceTexture _surface;
         protected ReadingFacade _reading;
         private AndroidCameraProxy _camera;
-        private AndroidTextToSpeechProxy _textToSpeech;
+        protected AndroidTextToSpeechProxy _textToSpeech;
         protected AndroidSpeechToTextProxy _speechToText;
         protected OpticalCharacterRecognition _ocr;
 
@@ -53,7 +53,8 @@ namespace Burton.Android
                 },
                 DictionaryFactory.GetAllWordsForLanguage(
                     AndroidConstants.Language.ToLanguageTag(),
-                    this));
+                    this),
+                AndroidConstants.Prompts);
 
             PermissionRequested += _camera.OnCameraPermissionFinished;
             PermissionRequested += _speechToText.OnMicrophonePermissionFinished;
@@ -70,15 +71,23 @@ namespace Burton.Android
 
             _speechToText.WordTimeout += (sender, args) =>
             {
-                if (_speechToText.IsListening)
+                _reading.HeardSpokenWord(string.Empty);
+            };
+
+            _speechToText.FinishedSpeaking += (sender, args) =>
+            {
+                if (args.Purpose != ReadingActivityMode.QuestionAnswering)
                 {
-                    _reading.HeardSpokenWord(string.Empty);
+                    _reading.StoppedSpeaking();
                 }
             };
 
-            _reading.SteppedInRegression += (sender, args) =>
+            _reading.SteppedInRegression += async (sender, args) =>
             {
-                _textToSpeech.Speak(args.Prompt);
+                await _textToSpeech.Speak(args.Prompt);
+                RunOnUiThread(() => {
+                    _speechToText.StartListening(_reading.ActivityMode);
+                });
             };
         }
 
@@ -165,6 +174,8 @@ namespace Burton.Android
 
         #region IOnInitListener
 
+        //todo: figure out how to assign this manually so that AndroidTextToSpeechProxy
+        //can recieve this directly
         public void OnInit(OperationResult status)
         {
             _textToSpeech.OnInit(status);

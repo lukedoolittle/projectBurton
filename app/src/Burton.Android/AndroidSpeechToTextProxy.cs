@@ -27,13 +27,14 @@ namespace Burton.Android
         private readonly ReadingActivity _readingActivity;
         private readonly Java.Util.Locale _language;
         private TaskCompletionSource<bool> _permissionSource;
-
+        private ReadingActivityMode _listeningPurpose = ReadingActivityMode.Nothing;
         private string _partialResults = string.Empty;
         private static readonly object PARTIAL_RESULTS_LOCK = new object();
 
         public event EventHandler<CapturedWordEventArgs> WordCaptured;
         public event EventHandler<WordTimeoutEventArgs> WordTimeout;
-
+        public event EventHandler<FinishedSpeakingEventArgs> FinishedSpeaking;
+        
         public bool IsListening = false;
 
         public Task<bool> CanAccessMicrophone()
@@ -103,14 +104,23 @@ namespace Burton.Android
             _speechIntent.PutExtra(RecognizerIntent.ExtraCallingPackage, Application.Context.PackageName);
         }
 
-        public void StartListening()
+        public void StartListening(ReadingActivityMode purpose)
         {
+            if (IsListening == true)
+            {
+                return;
+            }
             IsListening = true;
+            _listeningPurpose = purpose;
             _speech.StartListening(_speechIntent);
         }
 
         public void StopListening()
         {
+            if (IsListening == false)
+            {
+                return;
+            }
             _partialResults = string.Empty;
             IsListening = false;
             _speech.StopListening();
@@ -125,13 +135,18 @@ namespace Burton.Android
                 IsListening = false;
                 WordTimeout?.Invoke(
                     this,
-                    new WordTimeoutEventArgs());
+                    new WordTimeoutEventArgs
+                    {
+                        Purpose = _listeningPurpose
+                    });
+                _listeningPurpose = ReadingActivityMode.Nothing;
             }
             else
             {
-                _speech.Destroy();
-                CreateIntent();
-                StartListening();
+                throw new Exception();
+                //_speech.Destroy();
+                //CreateIntent();
+                //StartListening(_listeningPurpose);
             }
         }
 
@@ -161,8 +176,6 @@ namespace Burton.Android
             }
         }
 
-
-
         public void OnEvent(int eventType, Bundle @params)
         {
         }
@@ -179,9 +192,13 @@ namespace Burton.Android
         {
             _partialResults = string.Empty;
             IsListening = false;
-            WordTimeout?.Invoke(
+            FinishedSpeaking?.Invoke(
                 this,
-                new WordTimeoutEventArgs());
+                new FinishedSpeakingEventArgs
+                {
+                    Purpose = _listeningPurpose
+                });
+            _listeningPurpose = ReadingActivityMode.Nothing;
         }
 
         public void OnReadyForSpeech(Bundle @params)

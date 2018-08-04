@@ -13,18 +13,47 @@ namespace Burton.Core.Infrastructure
         private readonly Viewport _view;
         private readonly ReadingSession _readingSession;
         private readonly LanguageDictionary _dictionary;
+        private readonly IPrompts _prompts;
         private RegressionSubsession _regressionSubsession;
         public event EventHandler<ChangedOrMovedActiveWordEventArgs> ChangedOrMovedActiveWord;
-        public event EventHandler<SteppedInRegressionEventArgs> SteppedInRegression; 
+        public event EventHandler<SteppedInRegressionEventArgs> SteppedInRegression;
+
+        public ReadingActivityMode ActivityMode => _regressionSubsession == null
+            ? ReadingActivityMode.Reading
+            : ReadingActivityMode.QuestionAnswering;
 
         public ReadingFacade(
             Viewport view, 
             ReadingSession readingSession,
-            LanguageDictionary dictionary)
+            LanguageDictionary dictionary,
+            IPrompts prompts)
         {
             _view = view;
             _readingSession = readingSession;
             _dictionary = dictionary;
+            _prompts = prompts;
+        }
+
+        public void StoppedSpeaking()
+        {
+            lock (WORD_LOCK)
+            {
+                //if there is no active word then essentially they have
+                //finished the page
+                if (_view.CurrentPage.ActiveWord == null)
+                {
+                    return;
+                }
+
+                //if they stopped speaking durring a regression subsession
+                //we don't do anything
+                if (_regressionSubsession != null)
+                {
+                    return;
+                }
+
+                ConductSubsession(string.Empty);
+            }
         }
 
         public void HeardSpokenWord(string spokenWord)
@@ -59,37 +88,43 @@ namespace Burton.Core.Infrastructure
                 //subsession
                 else
                 {
-                    if (_regressionSubsession == null)
-                    {
-                        _regressionSubsession = new RegressionSubsession(
-                            _view.CurrentPage.ActiveWord.Word,
-                            spokenWord,
-                            _dictionary);
-                    }
-
-                    SteppedInRegression?.Invoke(
-                        this,
-                        new SteppedInRegressionEventArgs
-                        {
-                            Prompt = _regressionSubsession.AddressNextStep(spokenWord)
-                         });
-
-                    //if the regression subsession is done, record the results,
-                    //delete the subsession and advance the word
-                    if (_regressionSubsession.State == RegressionState.None)
-                    {
-                        _readingSession.SpeechPerformances.Add(
-                            new SpeechPerformance
-                            {
-                                ExpectedWord = _regressionSubsession.CurrentWord,
-                                ActualWord = _regressionSubsession.OriginalAttempt,
-                                IsPhonemicallyCorrect = _regressionSubsession.IsPhonemicallyCorrect,
-                                IsPhonicallyCorrect =  _regressionSubsession.IsPhonicallyCorrect
-                            });
-                        _regressionSubsession = null;
-                        AdvanceWord();
-                    }
+                    ConductSubsession(spokenWord);
                 }
+            }
+        }
+
+        private void ConductSubsession(string spokenWord)
+        {
+            if (_regressionSubsession == null)
+            {
+                _regressionSubsession = new RegressionSubsession(
+                    _view.CurrentPage.ActiveWord.Word,
+                    spokenWord,
+                    _dictionary,
+                    _prompts);
+            }
+
+            SteppedInRegression?.Invoke(
+                this,
+                new SteppedInRegressionEventArgs
+                {
+                    Prompt = _regressionSubsession.AddressNextStep(spokenWord)
+                });
+
+            //if the regression subsession is done, record the results,
+            //delete the subsession and advance the word
+            if (_regressionSubsession.State == RegressionState.None)
+            {
+                _readingSession.SpeechPerformances.Add(
+                    new SpeechPerformance
+                    {
+                        ExpectedWord = _regressionSubsession.CurrentWord,
+                        ActualWord = _regressionSubsession.OriginalAttempt,
+                        IsPhonemicallyCorrect = _regressionSubsession.IsPhonemicallyCorrect,
+                        IsPhonicallyCorrect = _regressionSubsession.IsPhonicallyCorrect
+                    });
+                _regressionSubsession = null;
+                AdvanceWord();
             }
         }
 

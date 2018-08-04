@@ -54,15 +54,21 @@ namespace Burton.Android
 
             _reading.ChangedOrMovedActiveWord += (sender, args) =>
             {
-                if (args.NewActiveWord != null && !_speechToText.IsListening)
+                if (args.NewActiveWord != null && 
+                    !_speechToText.IsListening &&
+                    !_textToSpeech.IsSpeaking)
                 {
-                    _speechToText.StartListening();
+                    RunOnUiThread(() => {
+                        _speechToText.StartListening(ReadingActivityMode.Reading);
+                    });
                 }
 
                 if (args.NewActiveWord == null)
                 {
                     ClearCanvas();
-                    _speechToText.StopListening();
+                    RunOnUiThread(() => {
+                        _speechToText.StopListening();
+                    });
                 }
                 else
                 {
@@ -70,9 +76,8 @@ namespace Burton.Android
                 }
             };
 
-            var rules = new PageRules();
-
-            rules.AddRule(new BadCharactersRule())
+            var rules = new PageRules()
+                .AddRule(new BadCharactersRule())
                 .AddRule(new LabelDictionaryWordsRule(
                     DictionaryFactory.GetAllWordsForLanguage(
                         AndroidConstants.Language.ToLanguageTag(),
@@ -86,14 +91,14 @@ namespace Burton.Android
             _ocr.CapturedText += (sender, args) =>
             {
                 var validWords = rules.ApplyRules(args.Words);
-                //var output = string.Join(" ", validWords.Select(w => w.Word));
                 if (validWords.Count > 0)
                 {
                     _reading.SawNewWords(validWords);
-                    //DrawWordBoundingBoxes(validWords.Select(w => w.Location));
                 }
             };
         }
+
+        #region Word Drawing
 
         private void ClearCanvas()
         {
@@ -157,6 +162,9 @@ namespace Burton.Android
             canvas.DrawRect(rectangle, paint);
             _surfaceView.Holder.UnlockCanvasAndPost(canvas);
         }
+
+        #endregion Word Drawing
+
     }
 }
 

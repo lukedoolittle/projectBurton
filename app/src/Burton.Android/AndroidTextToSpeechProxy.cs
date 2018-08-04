@@ -1,13 +1,16 @@
 ﻿using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Android.Content;
 using Android.Media;
 using Android.Speech.Tts;
+using Java.Util;
 
 namespace Burton.Android
 {
-    public class AndroidTextToSpeechProxy
+    public class AndroidTextToSpeechProxy :
+        UtteranceProgressListener
     {
         private readonly ReadingActivity _speechActivity;
         private readonly float _pitch;
@@ -17,6 +20,7 @@ namespace Burton.Android
         private readonly Java.Util.Locale _language;
         private readonly TaskCompletionSource<bool> _languageReadySource = 
             new TaskCompletionSource<bool>();
+        private TaskCompletionSource<string> _speakingCompleteSource;
 
         // ReSharper disable once InconsistentNaming
         private TextToSpeech __textToSpeech;
@@ -38,6 +42,13 @@ namespace Burton.Android
 
                 return __textToSpeech;
             }
+        }
+
+        public bool IsSpeaking => _textToSpeech.IsSpeaking;
+
+        public AndroidTextToSpeechProxy()
+            : this(null, Locale.English)
+        {
         }
 
         public AndroidTextToSpeechProxy(
@@ -70,6 +81,9 @@ namespace Burton.Android
 
         public Task InitializeLanguage()
         {
+            //MuteAudio();
+            MaxVolume();
+
             if (!_languageReadySource.Task.IsCompleted)
             {
                 _textToSpeech.SetLanguage(_language);
@@ -78,21 +92,26 @@ namespace Burton.Android
             return _languageReadySource.Task;
         }
 
-        public void Speak(string message)
+        public Task Speak(string message)
         {
             if (string.IsNullOrEmpty(message))
             {
-                return;
+                return Task.CompletedTask;
             }
 
+            _speakingCompleteSource = new TaskCompletionSource<string>();
+
 #pragma warning disable 618
-            UnmuteAudio();
+            //UnmuteAudio();
             _textToSpeech.Speak(
                 message,
                 QueueMode.Flush,
-                null);
-            MuteAudio();
+                null,
+                Guid.NewGuid().ToString());
+           // MuteAudio();
 #pragma warning restore 618
+
+            return _speakingCompleteSource.Task;
         }
 
         public void OnInit(OperationResult status)
@@ -103,19 +122,48 @@ namespace Burton.Android
             {
                 _textToSpeech.SetVoice(_textToSpeech.Voices.Single(v => v.Name == _speakerName));
                 _languageReadySource.SetResult(true);
+                _textToSpeech.SetOnUtteranceProgressListener(this);
             }
         }
 
         private static void MuteAudio()
         {
             var amanager = (AudioManager)MainApplication.CurrentActivity.GetSystemService(Context.AudioService);
+#pragma warning disable CS0618 // Type or member is obsolete
             amanager.SetStreamMute(Stream.Music, true);
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         private static void UnmuteAudio()
         {
             var amanager = (AudioManager)MainApplication.CurrentActivity.GetSystemService(Context.AudioService);
+#pragma warning disable 618
             amanager.SetStreamMute(Stream.Music, false);
+            var maxVolume = amanager.GetStreamMaxVolume(Stream.Music);
+            amanager.SetStreamVolume(Stream.Music, maxVolume, VolumeNotificationFlags.PlaySound);
+#pragma warning restore 618
+        }
+
+        private static void MaxVolume()
+        {
+            var amanager = (AudioManager)MainApplication.CurrentActivity.GetSystemService(Context.AudioService);
+#pragma warning disable 618
+            var maxVolume = amanager.GetStreamMaxVolume(Stream.Music);
+            amanager.SetStreamVolume(Stream.Music, maxVolume, VolumeNotificationFlags.PlaySound);
+#pragma warning restore 618
+        }
+
+        public override void OnDone(string utteranceId)
+        {
+            _speakingCompleteSource.SetResult(utteranceId);
+        }
+
+        public override void OnError(string utteranceId)
+        {
+        }
+
+        public override void OnStart(string utteranceId)
+        {
         }
     }
 }

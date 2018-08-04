@@ -22,6 +22,40 @@ namespace Burton.Android
         {
             base.OnCreate(savedInstanceState);
 
+            PermissionRequested += _camera.OnCameraPermissionFinished;
+            PermissionRequested += _speechToText.OnMicrophonePermissionFinished;
+            _camera.GeneratedPreviewImage += _ocr.CameraGeneratedPreviewImage;
+
+            _speechToText.WordCaptured += (sender, args) =>
+            {
+                if (_speechToText.IsListening)
+                {
+                    _reading.HeardSpokenWord(args.Word);
+                }
+            };
+
+            _speechToText.WordTimeout += (sender, args) =>
+            {
+                _reading.HeardSpokenWord(string.Empty);
+            };
+
+            _speechToText.FinishedSpeaking += (sender, args) =>
+            {
+                if (args.Purpose != ReadingActivityMode.QuestionAnswering)
+                {
+                    _reading.StoppedSpeaking();
+                }
+            };
+
+            _reading.SteppedInRegression += async (sender, args) =>
+            {
+                await _textToSpeech.Speak(args.Prompt);
+                RunOnUiThread(() => {
+                    _speechToText.StartListening(_reading.ActivityMode);
+                });
+            };
+
+
             SetContentView(Resource.Layout.Main);
 
             _textureView = (TextureView)FindViewById(Resource.Id.textureView);
@@ -45,7 +79,7 @@ namespace Burton.Android
             _textureView.LayoutParameters =
                 new RelativeLayout.LayoutParams(width, height);
 
-            await InitializeOcr();
+            await _ocr.Initialize();
             await RequestCameraPreview();
             await RequestMicrophoneAccess();
 #pragma warning disable 4014

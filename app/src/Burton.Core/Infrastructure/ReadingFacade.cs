@@ -14,6 +14,7 @@ namespace Burton.Core.Infrastructure
         private readonly ReadingSession _readingSession;
         private readonly LanguageDictionary _dictionary;
         private readonly IPrompts _prompts;
+        private readonly PageTurningState _pageTurningState;
         private RegressionSubsession _regressionSubsession;
         public event EventHandler<ChangedOrMovedActiveWordEventArgs> ChangedOrMovedActiveWord;
         public event EventHandler<SteppedInRegressionEventArgs> SteppedInRegression;
@@ -26,12 +27,14 @@ namespace Burton.Core.Infrastructure
             Viewport view, 
             ReadingSession readingSession,
             LanguageDictionary dictionary,
-            IPrompts prompts)
+            IPrompts prompts,
+            int pageTurnDelayTimeInMs)
         {
             _view = view;
             _readingSession = readingSession;
             _dictionary = dictionary;
             _prompts = prompts;
+            _pageTurningState = new PageTurningState(pageTurnDelayTimeInMs);
         }
 
         public void StoppedSpeaking()

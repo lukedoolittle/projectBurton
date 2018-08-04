@@ -76,6 +76,7 @@
     <Compile Include="AndroidTextToSpeechProxy.cs" />
     <Compile Include="AndroidSpeechToTextProxy.cs" />
     <Compile Include="DictionaryFactory.cs" />
+    <Compile Include="PerformanceConstants.cs" />
     <Compile Include="ReadingActivity.cs" />
     <Compile Include="MainActivity.cs" />
     <Compile Include="MainApplication.cs" />

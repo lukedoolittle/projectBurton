@@ -23,7 +23,7 @@ namespace Burton.Android
     {
         private SurfaceTexture _surface;
         protected ReadingFacade _reading;
-        private AndroidCameraProxy _camera;
+        protected AndroidCameraProxy _camera;
         protected AndroidTextToSpeechProxy _textToSpeech;
         protected AndroidSpeechToTextProxy _speechToText;
         protected OpticalCharacterRecognition _ocr;
@@ -54,46 +54,8 @@ namespace Burton.Android
                 DictionaryFactory.GetAllWordsForLanguage(
                     AndroidConstants.Language.ToLanguageTag(),
                     this),
-                AndroidConstants.Prompts);
-
-            PermissionRequested += _camera.OnCameraPermissionFinished;
-            PermissionRequested += _speechToText.OnMicrophonePermissionFinished;
-
-            _camera.GeneratedPreviewImage += _ocr.CameraGeneratedPreviewImage;
-
-            _speechToText.WordCaptured += (sender, args) =>
-            {
-                if (_speechToText.IsListening)
-                {
-                    _reading.HeardSpokenWord(args.Word);
-                }
-            };
-
-            _speechToText.WordTimeout += (sender, args) =>
-            {
-                _reading.HeardSpokenWord(string.Empty);
-            };
-
-            _speechToText.FinishedSpeaking += (sender, args) =>
-            {
-                if (args.Purpose != ReadingActivityMode.QuestionAnswering)
-                {
-                    _reading.StoppedSpeaking();
-                }
-            };
-
-            _reading.SteppedInRegression += async (sender, args) =>
-            {
-                await _textToSpeech.Speak(args.Prompt);
-                RunOnUiThread(() => {
-                    _speechToText.StartListening(_reading.ActivityMode);
-                });
-            };
-        }
-
-        public Task InitializeOcr()
-        {
-            return _ocr.Initialize();
+                AndroidConstants.Prompts,
+                PerformanceConstants.PageTurnDelayTimeInMs);
         }
 
         #region Permissions

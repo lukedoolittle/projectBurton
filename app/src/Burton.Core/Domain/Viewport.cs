@@ -18,10 +18,20 @@ namespace Burton.Core.Domain
                     CurrentPage.Words[currentWordIndex+1];
         }
 
-        public void AlterPage(List<WordOnPage> words)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="words"></param>
+        /// <returns>True if we have a new page, false otherwise</returns>
+        public bool AlterPage(List<WordOnPage> words)
         {
             lock (VIEW_LOCK)
             {
+                if (words.Count == 0)
+                {
+                    return false;
+                }
+
                 //if there is no current page then we just started
                 //make the words the current page
                 if (CurrentPage == null)
@@ -32,6 +42,7 @@ namespace Burton.Core.Domain
                         Words = words,
                         ActiveWord = words.First()
                     };
+                    return true;
                 }
                 else
                 {
@@ -49,6 +60,7 @@ namespace Burton.Core.Domain
                             Words = words,
                             ActiveWord = words.First()
                         };
+                        return true;
                     }
                     //otherwise if the words are on the current page then adjust all the locations
                     else if (areWordsOnCurrentPage)
@@ -66,6 +78,8 @@ namespace Burton.Core.Domain
                         CurrentPage.ActiveWord = words.First(w => w.Word == CurrentPage.ActiveWord.Word);
                     }
                 }
+
+                return false;
             }
         }
     }

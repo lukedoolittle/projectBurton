@@ -6,7 +6,7 @@ namespace Burton.Core.Domain
 {
     public class FinalRule : IPageRule
     {
-        private const float DISTANCE_TOLERANCE = 400;
+        private const float DISTANCE_TOLERANCE = 500;
         private const float WORD_LENGTH_TOLERANCE = 2;
 
         public List<WordOnPage> ApplyRule(List<WordOnPage> words)

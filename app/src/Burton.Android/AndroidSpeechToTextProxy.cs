@@ -35,7 +35,7 @@ namespace Burton.Android
         public event EventHandler<WordTimeoutEventArgs> WordTimeout;
         public event EventHandler<FinishedSpeakingEventArgs> FinishedSpeaking;
         
-        public bool IsListening = false;
+        public bool IsListening { get; set; } =  false;
 
         public Task<bool> CanAccessMicrophone()
         {
@@ -106,6 +106,7 @@ namespace Burton.Android
 
         public void StartListening(ReadingActivityMode purpose)
         {
+            _partialResults = string.Empty;
             if (IsListening == true)
             {
                 return;
@@ -121,7 +122,6 @@ namespace Burton.Android
             {
                 return;
             }
-            _partialResults = string.Empty;
             IsListening = false;
             _speech.StopListening();
         }
@@ -130,7 +130,8 @@ namespace Burton.Android
         {
             _partialResults = string.Empty;
 
-            if (error == SpeechRecognizerError.SpeechTimeout)
+            if (error == SpeechRecognizerError.SpeechTimeout ||
+                error == SpeechRecognizerError.NoMatch)
             {
                 IsListening = false;
                 WordTimeout?.Invoke(
@@ -152,26 +153,24 @@ namespace Burton.Android
 
         public void OnPartialResults(Bundle partialResults)
         {
-            var matches = partialResults.GetStringArrayList(SpeechRecognizer.ResultsRecognition);
-
-            if (matches.Count != 0)
+            lock (PARTIAL_RESULTS_LOCK)
             {
-                var currentWords = matches[0];
-                var newWords = new List<string>();
+                var matches = partialResults.GetStringArrayList(SpeechRecognizer.ResultsRecognition);
 
-                lock (PARTIAL_RESULTS_LOCK)
+                if (matches.Count != 0)
                 {
-                    newWords = currentWords
-                        .GetStringAfterStartingString(_partialResults)
-                        .GetNonEmptyTokens();
+                    var currentWords = matches[0];
+
+                    var partialDifference = currentWords.GetStringAfterStartingString(_partialResults);
+                    var newWords = partialDifference.GetNonEmptyTokens();
                     _partialResults = currentWords;
-                }
-
-                foreach (var newWord in newWords)
-                {
-                    WordCaptured?.Invoke(
-                        this,
-                        new CapturedWordEventArgs { Word = newWord });
+                    
+                    foreach (var newWord in newWords)
+                    {
+                        WordCaptured?.Invoke(
+                            this,
+                            new CapturedWordEventArgs { Word = newWord });
+                    }
                 }
             }
         }
@@ -190,15 +189,7 @@ namespace Burton.Android
 
         public void OnEndOfSpeech()
         {
-            _partialResults = string.Empty;
-            IsListening = false;
-            FinishedSpeaking?.Invoke(
-                this,
-                new FinishedSpeakingEventArgs
-                {
-                    Purpose = _listeningPurpose
-                });
-            _listeningPurpose = ReadingActivityMode.Nothing;
+
         }
 
         public void OnReadyForSpeech(Bundle @params)
@@ -207,6 +198,33 @@ namespace Burton.Android
 
         public void OnResults(Bundle results)
         {
+            lock (PARTIAL_RESULTS_LOCK)
+            {
+                //if the partial results are nothing behave as if
+                //we saw a timeout
+                if (_partialResults == string.Empty)
+                {
+                    IsListening = false;
+                    WordTimeout?.Invoke(
+                        this,
+                        new WordTimeoutEventArgs
+                        {
+                            Purpose = _listeningPurpose
+                        });
+                    _listeningPurpose = ReadingActivityMode.Nothing;
+                }
+                else
+                {
+                    IsListening = false;
+                    FinishedSpeaking?.Invoke(
+                        this,
+                        new FinishedSpeakingEventArgs
+                        {
+                            Purpose = _listeningPurpose
+                        });
+                    _listeningPurpose = ReadingActivityMode.Nothing;
+                }
+            }
         }
 
         public void OnRmsChanged(float rmsdB)

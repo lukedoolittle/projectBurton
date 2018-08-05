@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Burton.Core.Common;
+using Burton.Core.Common.Event;
 using Burton.Core.Domain;
 
 namespace Burton.Core.Infrastructure
@@ -20,15 +21,20 @@ namespace Burton.Core.Infrastructure
         private ComprehensionSubsession _comprehensionSubsession;
         public event EventHandler<ChangedOrMovedActiveWordEventArgs> ChangedOrMovedActiveWord;
         public event EventHandler<SteppedInRegressionEventArgs> SteppedInRegression;
+        public event EventHandler<ChangedPageEventArgs> ChangedPage; 
 
         public ReadingActivityMode ActivityMode => _regressionSubsession != null || _comprehensionSubsession != null
             ? ReadingActivityMode.QuestionAnswering
             : ReadingActivityMode.Reading;
 
+        public bool IsPerformingReadingComprehension => _comprehensionSubsession != null;
+
         public bool IsTurningPage => _pageTurningState.IsTurningPage;
 
         public bool IsJustStarting => _view.CurrentPage.IsFirstWordOnPage &&
                                       _view.CurrentPage.PageNumber == 1;
+
+        private bool _canAdjustWordsOnPage => !IsTurningPage && !IsPerformingReadingComprehension;
 
         public ReadingFacade(
             Viewport view, 
@@ -108,6 +114,34 @@ namespace Burton.Core.Infrastructure
             }
         }
 
+        public void SawNewWords(List<WordOnPage> words)
+        {
+            lock (WORD_LOCK)
+            {
+                if (!_canAdjustWordsOnPage || words.Count == 0)
+                {
+                    return;
+                }
+
+                if (_view.AlterPage(words))
+                {
+                    ChangedPage?.Invoke(
+                        this,
+                        new ChangedPageEventArgs
+                        {
+                            NewPage = _view.CurrentPage
+                        });
+                }
+
+                ChangedOrMovedActiveWord?.Invoke(
+                    this,
+                    new ChangedOrMovedActiveWordEventArgs
+                    {
+                        NewActiveWord = _view.CurrentPage.ActiveWord
+                    });
+            }
+        }
+
         private void ConductSubsession(string spokenWord)
         {
             if (_regressionSubsession == null)
@@ -176,7 +210,7 @@ namespace Burton.Core.Infrastructure
 
                 var prompt = _comprehensionSubsession.IsCorrectAnswer(spokenWord) ? 
                     _prompts.Correct : 
-                    $"{_prompts.Try} {string.Format(_prompts.QuestionCorrection, _comprehensionSubsession.AnswerText)}";
+                    $"{_prompts.Fail} {string.Format(_prompts.QuestionCorrection, _comprehensionSubsession.AnswerText)}";
 
                 _comprehensionSubsession = null;
                 SteppedInRegression?.Invoke(
@@ -204,8 +238,7 @@ namespace Burton.Core.Infrastructure
                         this,
                         new SteppedInRegressionEventArgs
                         {
-                            Prompt = _regressionSubsession.AddressNextStep(
-                                _comprehensionSubsession.QuestionText)
+                            Prompt = _comprehensionSubsession.QuestionText
                         });
                     return true;
                 }
@@ -216,23 +249,6 @@ namespace Burton.Core.Infrastructure
             }
         }
 
-        public void SawNewWords(List<WordOnPage> words)
-        {
-            lock (WORD_LOCK)
-            {
-                if (words.Count == 0)
-                {
-                    return;
-                }
-                _view.AlterPage(words);
 
-                ChangedOrMovedActiveWord?.Invoke(
-                    this,
-                    new ChangedOrMovedActiveWordEventArgs
-                    {
-                        NewActiveWord = _view.CurrentPage.ActiveWord
-                    });
-            }
-        }
     }
 }

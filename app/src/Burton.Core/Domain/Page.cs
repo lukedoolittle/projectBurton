@@ -18,6 +18,11 @@ namespace Burton.Core.Domain
         /// <returns>True if the page is the same, false otherwise</returns>
         public bool AreWordsOnCurrentPage(List<WordOnPage> words)
         {
+            if (words.Count != Words.Count)
+            {
+                return false;
+            }
+
             var currentWords = Words.Select(w => w.Word);
             var newWords = words.Select(w => w.Word);
 

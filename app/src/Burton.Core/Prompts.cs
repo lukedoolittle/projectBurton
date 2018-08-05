@@ -18,7 +18,7 @@ namespace Burton.Core
 
         public string PhonemicCheck { get; } = "Does this say {0}?";
 
-        public string PhonicCheck { get; } = "Can you say. {0}?";
+        public string PhonicCheck { get; } = "Can you say {0}?";
 
         public string Start { get; } = "Lets start reading!";
 

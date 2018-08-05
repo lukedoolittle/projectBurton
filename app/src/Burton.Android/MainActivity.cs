@@ -18,7 +18,10 @@ namespace Burton.Android
         private TextureView _textureView;
         private SurfaceView _surfaceView;
 
-        protected override void OnCreate(Bundle savedInstanceState)
+        private bool _shouldGiveIntroPrompt => _reading.IsJustStarting && !_textToSpeech.IsSpeaking;
+        
+
+        protected override async void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
 
@@ -50,7 +53,9 @@ namespace Burton.Android
             _reading.SteppedInRegression += async (sender, args) =>
             {
                 await _textToSpeech.Speak(args.Prompt);
-                RunOnUiThread(() => {
+                RunOnUiThread(() =>
+                {
+                    string a = args.Prompt;
                     _speechToText.StartListening(_reading.ActivityMode);
                 });
             };
@@ -75,44 +80,6 @@ namespace Burton.Android
                 width, 
                 height);
 
-            _textureView.LayoutParameters =
-                new RelativeLayout.LayoutParams(width, height);
-
-            await _ocr.Initialize();
-            await RequestCameraPreview();
-            await RequestMicrophoneAccess();
-#pragma warning disable 4014
-            RequestVoice(); //todo: figure out why we can't make await this call
-#pragma warning restore 4014
-
-            _reading.ChangedOrMovedActiveWord += async (sender, args) =>
-            {
-                if (args.NewActiveWord != null && 
-                    !_speechToText.IsListening &&
-                    !_textToSpeech.IsSpeaking)
-                {
-                    if (_reading.IsJustStarting)
-                    {
-                        await _textToSpeech.Speak(AndroidConstants.Prompts.Start);
-                    }
-                    RunOnUiThread(() => {
-                        _speechToText.StartListening(ReadingActivityMode.Reading);
-                    });
-                }
-
-                if (args.NewActiveWord == null)
-                {
-                    ClearCanvas();
-                    RunOnUiThread(() => {
-                        _speechToText.StopListening();
-                    });
-                }
-                else
-                {
-                    DrawWordUnderline(args.NewActiveWord.Location);
-                }
-            };
-
             var rules = new PageRules()
                 .AddRule(new BadCharactersRule())
                 .AddRule(new LabelDictionaryWordsRule(
@@ -125,14 +92,57 @@ namespace Burton.Android
                 .AddRule(new RectangularBoundingBoxRule())
                 .AddFinalRule(new FinalRule());
 
+            _textureView.LayoutParameters =
+                new RelativeLayout.LayoutParams(width, height);
+
+            await _ocr.Initialize();
+            await RequestCameraPreview();
+            await RequestMicrophoneAccess();
+#pragma warning disable 4014
+            RequestVoice(); //todo: figure out why we can't make await this call
+#pragma warning restore 4014
+
+            _reading.ChangedPage += async (sender, args) =>
+            {
+                if (_shouldGiveIntroPrompt)
+                {
+                    await _textToSpeech.Speak(AndroidConstants.Prompts.Start);
+                }
+
+                RunOnUiThread(() =>
+                {
+                    _speechToText.StartListening(ReadingActivityMode.Reading);
+                });
+            };
+
+            _reading.ChangedOrMovedActiveWord += (sender, args) =>
+            {
+                if (args.NewActiveWord == null)
+                {
+                    ClearCanvas();
+                    RunOnUiThread(() =>
+                    {
+                        _speechToText.StopListening();
+                    });
+                }
+                else
+                {
+                    if (_reading.ActivityMode == ReadingActivityMode.QuestionAnswering)
+                    {
+                        DrawWordCircle(args.NewActiveWord.Location);
+                    }
+                    else
+                    {
+                        DrawWordUnderline(args.NewActiveWord.Location);
+                    }
+                }
+            };
+
             _ocr.CapturedText += (sender, args) =>
             {
-                if (!_reading.IsTurningPage)
-                {
-                    var actualWords = rules.ApplyRules(args.Words);
-                    _reading.SawNewWords(actualWords);
-                    DrawWordBoundingBoxes(actualWords.Select(w => w.Location));
-                }
+                var actualWords = rules.ApplyRules(args.Words);
+                _reading.SawNewWords(actualWords);
+                //DrawWordBoundingBoxes(actualWords.Select(w => w.Location));
             };
         }
 
@@ -149,19 +159,40 @@ namespace Burton.Android
         {
             var paint = new Paint { Color = Color.Red };
             paint.SetStyle(Paint.Style.Stroke);
-            paint.StrokeWidth = 8f;
+            paint.StrokeWidth = 12f;
 
             var canvas = _surfaceView.Holder.LockCanvas();
             canvas.DrawColor(Color.Transparent, PorterDuff.Mode.Clear);
 
             canvas.DrawLine(
-                resultLocation.X + PerformanceConstants.BoundingBoxXOffset - PerformanceConstants.BoundingBoxWidthInflation / 2, 
-                resultLocation.Bottom + PerformanceConstants.BoundingBoxYOffset, 
-                resultLocation.X + resultLocation.Width + PerformanceConstants.BoundingBoxXOffset + PerformanceConstants.BoundingBoxWidthInflation / 2,
-                resultLocation.Bottom + PerformanceConstants.BoundingBoxYOffset,
+                resultLocation.X + PerformanceConstants.BoundingGeometryXOffset - PerformanceConstants.BoundingBoxWidthInflation / 2, 
+                resultLocation.Bottom + PerformanceConstants.BoundingGeometryYOffset, 
+                resultLocation.X + resultLocation.Width + PerformanceConstants.BoundingGeometryXOffset + PerformanceConstants.BoundingBoxWidthInflation / 2,
+                resultLocation.Bottom + PerformanceConstants.BoundingGeometryYOffset,
                 paint);
             _surfaceView.Holder.UnlockCanvasAndPost(canvas);
         }
+
+        private void DrawWordCircle(Rectangle resultLocation)
+        {
+            var paint = new Paint { Color = Color.Red };
+            paint.SetStyle(Paint.Style.Stroke);
+            paint.StrokeWidth = 8f;
+
+            var canvas = _surfaceView.Holder.LockCanvas();
+            canvas.DrawColor(Color.Transparent, PorterDuff.Mode.Clear);
+
+            var rectangle = new RectF(
+                (resultLocation.Left + PerformanceConstants.BoundingGeometryXOffset - PerformanceConstants.BoundingCircleWidthInflation / 2),
+                (resultLocation.Top + PerformanceConstants.BoundingGeometryYOffset - PerformanceConstants.BoundingCircleHeightInflation / 2),
+                (resultLocation.Right + PerformanceConstants.BoundingGeometryXOffset + PerformanceConstants.BoundingCircleWidthInflation / 2),
+                (resultLocation.Bottom + PerformanceConstants.BoundingGeometryYOffset + PerformanceConstants.BoundingCircleHeightInflation / 2));
+
+            canvas.DrawOval(rectangle, paint);
+
+            _surfaceView.Holder.UnlockCanvasAndPost(canvas);
+        }
+
 
         private void DrawWordBoundingBoxes(IEnumerable<Rectangle> resultLocations)
         {
@@ -172,11 +203,11 @@ namespace Burton.Android
             var canvas = _surfaceView.Holder.LockCanvas();
             canvas.DrawColor(Color.Transparent, PorterDuff.Mode.Clear);
             var rectangles = resultLocations.Select(r =>
-                new Rect(
-                    (int) (r.Left + PerformanceConstants.BoundingBoxXOffset - PerformanceConstants.BoundingBoxWidthInflation/2),
-                    (int) (r.Top + PerformanceConstants.BoundingBoxYOffset - PerformanceConstants.BoundingBoxHeightInflation / 2),
-                    (int) (r.Right + PerformanceConstants.BoundingBoxXOffset + PerformanceConstants.BoundingBoxWidthInflation / 2),
-                    (int) (r.Bottom + PerformanceConstants.BoundingBoxYOffset + PerformanceConstants.BoundingBoxHeightInflation / 2)));
+                new RectF(
+                    (r.Left + PerformanceConstants.BoundingGeometryXOffset - PerformanceConstants.BoundingBoxWidthInflation/2),
+                    (r.Top + PerformanceConstants.BoundingGeometryYOffset - PerformanceConstants.BoundingBoxHeightInflation / 2),
+                    (r.Right + PerformanceConstants.BoundingGeometryXOffset + PerformanceConstants.BoundingBoxWidthInflation / 2),
+                    (r.Bottom + PerformanceConstants.BoundingGeometryYOffset + PerformanceConstants.BoundingBoxHeightInflation / 2)));
             foreach (var rectangle in rectangles)
             {
                 canvas.DrawRect(rectangle, paint);
@@ -184,22 +215,22 @@ namespace Burton.Android
             _surfaceView.Holder.UnlockCanvasAndPost(canvas);
         }
 
-        private void DrawWordBoundingBox(Rectangle resultLocation)
-        {
-            var paint = new Paint {Color = Color.BlueViolet};
-            paint.SetStyle(Paint.Style.Stroke);
-            paint.StrokeWidth = 2f;
+        //private void DrawWordBoundingBox(Rectangle resultLocation)
+        //{
+        //    var paint = new Paint {Color = Color.BlueViolet};
+        //    paint.SetStyle(Paint.Style.Stroke);
+        //    paint.StrokeWidth = 2f;
 
-            var canvas = _surfaceView.Holder.LockCanvas();
-            canvas.DrawColor(Color.Transparent, PorterDuff.Mode.Clear);
-            var rectangle = new Rect(
-                    (int)(resultLocation.Left + PerformanceConstants.BoundingBoxXOffset - PerformanceConstants.BoundingBoxWidthInflation / 2),
-                    (int)(resultLocation.Top + PerformanceConstants.BoundingBoxYOffset - PerformanceConstants.BoundingBoxHeightInflation / 2),
-                    (int)(resultLocation.Right + PerformanceConstants.BoundingBoxXOffset + PerformanceConstants.BoundingBoxWidthInflation / 2),
-                    (int)(resultLocation.Bottom + PerformanceConstants.BoundingBoxYOffset + PerformanceConstants.BoundingBoxHeightInflation / 2));
-            canvas.DrawRect(rectangle, paint);
-            _surfaceView.Holder.UnlockCanvasAndPost(canvas);
-        }
+        //    var canvas = _surfaceView.Holder.LockCanvas();
+        //    canvas.DrawColor(Color.Transparent, PorterDuff.Mode.Clear);
+        //    var rectangle = new Rect(
+        //            (int)(resultLocation.Left + PerformanceConstants.BoundingBoxXOffset - PerformanceConstants.BoundingBoxWidthInflation / 2),
+        //            (int)(resultLocation.Top + PerformanceConstants.BoundingBoxYOffset - PerformanceConstants.BoundingBoxHeightInflation / 2),
+        //            (int)(resultLocation.Right + PerformanceConstants.BoundingBoxXOffset + PerformanceConstants.BoundingBoxWidthInflation / 2),
+        //            (int)(resultLocation.Bottom + PerformanceConstants.BoundingBoxYOffset + PerformanceConstants.BoundingBoxHeightInflation / 2));
+        //    canvas.DrawRect(rectangle, paint);
+        //    _surfaceView.Holder.UnlockCanvasAndPost(canvas);
+        //}
 
         #endregion Word Drawing
 

@@ -1,16 +1,17 @@
 ﻿using System;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Android.Content;
 using Android.Media;
 using Android.Speech.Tts;
+using Burton.Core.Common;
 using Java.Util;
 
 namespace Burton.Android
 {
     public class AndroidTextToSpeechProxy :
-        UtteranceProgressListener
+        UtteranceProgressListener,
+        ITextToSpeechProxy
     {
         private readonly ReadingActivity _speechActivity;
         private readonly float _pitch;
@@ -21,6 +22,8 @@ namespace Burton.Android
         private readonly TaskCompletionSource<bool> _languageReadySource = 
             new TaskCompletionSource<bool>();
         private TaskCompletionSource<string> _speakingCompleteSource;
+
+        private static object SPEECH_LOCK = new object();
 
         // ReSharper disable once InconsistentNaming
         private TextToSpeech __textToSpeech;
@@ -94,27 +97,30 @@ namespace Burton.Android
 
         public Task Speak(string message)
         {
-            if (string.IsNullOrEmpty(message))
+            lock (SPEECH_LOCK)
             {
-                return Task.CompletedTask;
-            }
+                if (string.IsNullOrEmpty(message) || IsSpeaking)
+                {
+                    return Task.CompletedTask;
+                }
 
-            _speakingCompleteSource = new TaskCompletionSource<string>();
+                _speakingCompleteSource = new TaskCompletionSource<string>();
 
 #pragma warning disable 618
-            //UnmuteAudio();
-            _textToSpeech.Speak(
-                message,
-                QueueMode.Flush,
-                null,
-                Guid.NewGuid().ToString());
-           // MuteAudio();
+                //UnmuteAudio();
+                _textToSpeech.Speak(
+                    message,
+                    QueueMode.Flush,
+                    null,
+                    Guid.NewGuid().ToString());
+                // MuteAudio();
 #pragma warning restore 618
 
-            return _speakingCompleteSource.Task;
+                return _speakingCompleteSource.Task;
+            }
         }
 
-        public void OnInit(OperationResult status)
+        public void OnInit()
         {
             //only the default language is supported at current
             if (_textToSpeech.IsLanguageAvailable(_language) == 

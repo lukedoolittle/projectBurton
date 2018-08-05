@@ -1,24 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Android.App;
-using Android.Content;
 using Android.Media;
-using Android.OS;
-using Android.Util;
+using Burton.Core.Common;
 using CognitiveServicesTTS;
-using Java.Lang;
 using Encoding = Android.Media.Encoding;
-using Exception = System.Exception;
 using Stream = System.IO.Stream;
 
 namespace Burton.Android
 {
-    public class AndroidCloudTextToSpeechProxy
+    //todo: cache the results because a lot of the speech is repeated.
+    public class AndroidCloudTextToSpeechProxy : ITextToSpeechProxy
     {
         private const string REQUEST_URI = "https://westus.tts.speech.microsoft.com/cognitiveservices/v1";
         private const string AUTHENTICATION_URI = "https://westus.api.cognitive.microsoft.com/sts/v1.0/issueToken";
@@ -35,7 +28,10 @@ namespace Burton.Android
             _apiKey = apiKey;
             _locale = locale;
         }
-        public async Task Speak(string textToSpeak)
+
+        public bool IsSpeaking { get; private set; } = false;
+
+        public Task Speak(string textToSpeak)
         {
             var auth = new Authentication(
                 AUTHENTICATION_URI, 
@@ -43,66 +39,62 @@ namespace Burton.Android
             var accessToken = auth.GetAccessToken();
 
             var cortana = new Synthesize();
-            cortana.OnAudioAvailable += PlayAudio;
+            var taskCompletion = new TaskCompletionSource<bool>();
 
-            await cortana.Speak(CancellationToken.None, new Synthesize.InputOptions()
+            cortana.OnAudioAvailable += async (sender, args) =>
+            {
+                IsSpeaking = true;
+                var memoryStream = new MemoryStream();
+                args.EventData.CopyTo(memoryStream);
+                var audioBytes = memoryStream.ToArray();
+
+                var audioTrack = new AudioTrack(
+                    global::Android.Media.Stream.Music,
+                    24000,
+                    ChannelOut.Mono,
+                    Encoding.Pcm16bit,
+                    audioBytes.Length,
+                    AudioTrackMode.Stream);
+
+                await audioTrack.WriteAsync(audioBytes, 0, audioBytes.Length);
+                audioTrack.Play();
+
+                await Task.Delay(ApproximateSpeakingTime(textToSpeak));
+
+                audioTrack.Release();
+                audioTrack.Dispose();
+                IsSpeaking = false;
+                taskCompletion.SetResult(true);
+            };
+
+            cortana.Speak(CancellationToken.None, new Synthesize.InputOptions()
             {
                 RequestUri = new Uri(REQUEST_URI),
                 Text = textToSpeak,
                 VoiceType = Gender.Female,
                 Locale = _locale,
                 VoiceName = VOICE,
-                OutputFormat = AudioOutputFormat.Riff16Khz16BitMonoPcm,
+                OutputFormat = AudioOutputFormat.Riff24Khz16BitMonoPcm,
                 AuthorizationToken = "Bearer " + accessToken,
             });
+
+            return taskCompletion.Task;
         }
 
-        private async void PlayAudio(
-            object sender, 
-            GenericEventArgs<Stream> e)
+        //to meet the interface definition
+        public Task InitializeLanguage()
         {
-            var memoryStream = new MemoryStream();
-            e.EventData.CopyTo(memoryStream);
-            var audioBytes = memoryStream.ToArray();
+            return Task.CompletedTask;
+        }
 
-            try
-            {
+        //to meet the interface definition
+        public void OnInit()
+        {
+        }
 
-                var audioTrack = new AudioTrack(
-                    global::Android.Media.Stream.Music,
-                    16000,
-                    ChannelOut.Mono, 
-                    Encoding.Pcm16bit,
-                    audioBytes.Length,
-                    AudioTrackMode.Stream);
-
-
-                for (int i = 0; i < 2; i++)
-                {
-                    try
-                    {
-
-                        audioTrack.Play();
-                        await audioTrack.WriteAsync(audioBytes, 0, audioBytes.Length);
-
-                    }
-                    catch (IllegalStateException illEx)
-                    {
-                        Log.Debug("StaveApp", $"Unable to initialize audio exception {illEx.Message}");
-                    }
-
-                    await Task.Delay(2000);
-                }
-
-                audioTrack.Release();
-                audioTrack.Dispose();
-
-            }
-            catch (Exception exception)
-            {
-                Log.Debug("StaveApp", $"Exception in Android.PlayWordImplementation: {exception.Message}");
-
-            }
+        private static int ApproximateSpeakingTime(string textToSpeak)
+        {
+            return textToSpeak.Replace(" ", String.Empty).Length * 142;
         }
     }
 }

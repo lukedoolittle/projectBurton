@@ -26,7 +26,7 @@ namespace Burton.Android
         private SurfaceTexture _surface;
         protected ReadingFacade _reading;
         protected AndroidCameraProxy _camera;
-        protected AndroidTextToSpeechProxy _textToSpeech;
+        protected ITextToSpeechProxy _textToSpeech;
         protected AndroidSpeechToTextProxy _speechToText;
         protected OpticalCharacterRecognition _ocr;
 
@@ -143,10 +143,9 @@ namespace Burton.Android
         //can recieve this directly
         public void OnInit(OperationResult status)
         {
-            _textToSpeech.OnInit(status);
+            _textToSpeech.OnInit();
         }
 
         #endregion IOnInitListener
-
     }
 }

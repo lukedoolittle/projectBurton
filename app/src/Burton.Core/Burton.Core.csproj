@@ -10,4 +10,8 @@
     <PackageReference Include="Xamarin.Tesseract" Version="0.3.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="AppService\" />
+  </ItemGroup>
+
 </Project>

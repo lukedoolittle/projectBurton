@@ -20,12 +20,14 @@ namespace Burton.Core
 
         public string PhonicCheck { get; } = "Can you say. {0}?";
 
-        public string Start { get; } = "Lets get going!";
+        public string Start { get; } = "Lets start reading!";
 
         public string Success { get; } = "Great job!";
 
         public string Try { get; } = "Lets try one more time";
 
         public string Wait { get; } = "Wait just a minute";
+
+        public string QuestionCorrection { get; } = "The correct answer is {0}";
     }
 }

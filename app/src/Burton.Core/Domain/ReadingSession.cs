@@ -11,7 +11,7 @@ namespace Burton.Core.Domain
         /// <summary>
         /// The book that is part of the reading session
         /// </summary>
-        public Book Book { get; set; }
+        public Book Book { get; set; } = new Book();
 
         /// <summary>
         /// Track current history of performed words

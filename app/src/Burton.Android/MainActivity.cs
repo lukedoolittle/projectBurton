@@ -85,12 +85,16 @@ namespace Burton.Android
             RequestVoice(); //todo: figure out why we can't make await this call
 #pragma warning restore 4014
 
-            _reading.ChangedOrMovedActiveWord += (sender, args) =>
+            _reading.ChangedOrMovedActiveWord += async (sender, args) =>
             {
                 if (args.NewActiveWord != null && 
                     !_speechToText.IsListening &&
                     !_textToSpeech.IsSpeaking)
                 {
+                    if (_reading.IsJustStarting)
+                    {
+                        await _textToSpeech.Speak(AndroidConstants.Prompts.Start);
+                    }
                     RunOnUiThread(() => {
                         _speechToText.StartListening(ReadingActivityMode.Reading);
                     });

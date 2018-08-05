@@ -13,5 +13,6 @@
         string Success { get; }
         string Try { get; }
         string Wait { get; }
+        string QuestionCorrection { get; }
     }
 }

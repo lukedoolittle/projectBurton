@@ -7,6 +7,7 @@ using Android.OS;
 using Android.Speech.Tts;
 using Android.Views;
 using Burton.Core.Common;
+using Burton.Core.Data;
 using Burton.Core.Domain;
 using Burton.Core.Infrastructure;
 using Tesseract;
@@ -50,7 +51,8 @@ namespace Burton.Android
                 new Viewport(),
                 new ReadingSession
                 {
-                    StartTime = DateTimeOffset.Now
+                    StartTime = DateTimeOffset.Now,
+                    Book = Books.TheGivingTree
                 },
                 DictionaryFactory.GetAllWordsForLanguage(
                     AndroidConstants.Language.ToLanguageTag(),

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Burton.Core.Common;
 using Burton.Core.Domain;
 
@@ -16,14 +17,18 @@ namespace Burton.Core.Infrastructure
         private readonly IPrompts _prompts;
         private readonly PageTurningState _pageTurningState;
         private RegressionSubsession _regressionSubsession;
+        private ComprehensionSubsession _comprehensionSubsession;
         public event EventHandler<ChangedOrMovedActiveWordEventArgs> ChangedOrMovedActiveWord;
         public event EventHandler<SteppedInRegressionEventArgs> SteppedInRegression;
 
-        public ReadingActivityMode ActivityMode => _regressionSubsession == null
-            ? ReadingActivityMode.Reading
-            : ReadingActivityMode.QuestionAnswering;
+        public ReadingActivityMode ActivityMode => _regressionSubsession != null || _comprehensionSubsession != null
+            ? ReadingActivityMode.QuestionAnswering
+            : ReadingActivityMode.Reading;
 
         public bool IsTurningPage => _pageTurningState.IsTurningPage;
+
+        public bool IsJustStarting => _view.CurrentPage.IsFirstWordOnPage &&
+                                      _view.CurrentPage.PageNumber == 1;
 
         public ReadingFacade(
             Viewport view, 
@@ -52,7 +57,7 @@ namespace Burton.Core.Infrastructure
 
                 //if they stopped speaking durring a regression subsession
                 //we don't do anything
-                if (_regressionSubsession != null)
+                if (ActivityMode == ReadingActivityMode.QuestionAnswering)
                 {
                     return;
                 }
@@ -65,6 +70,11 @@ namespace Burton.Core.Infrastructure
         {
             lock (WORD_LOCK)
             {
+                if (_comprehensionSubsession != null)
+                {
+                    ConductComprehension(spokenWord);
+                }
+
                 //if there is no active word we cannot evaluate performance
                 //nor advance the current word
                 if (_view.CurrentPage.ActiveWord == null)
@@ -139,7 +149,10 @@ namespace Burton.Core.Infrastructure
 
             if (_view.CurrentPage.ActiveWord == null)
             {
-                _pageTurningState.StartTurningPage();
+                if (!ConductComprehension(string.Empty))
+                {
+                    _pageTurningState.StartTurningPage();
+                }
             }
 
             ChangedOrMovedActiveWord?.Invoke(
@@ -148,6 +161,59 @@ namespace Burton.Core.Infrastructure
                 {
                     NewActiveWord = _view.CurrentPage.ActiveWord
                 });
+        }
+
+        private bool ConductComprehension(string spokenWord)
+        {
+            if (_comprehensionSubsession != null)
+            {
+                _readingSession.QuestionPerformances.Add(
+                    new QuestionPerformance
+                    {
+                        Question = _comprehensionSubsession.QuestionText,
+                        Answer = spokenWord
+                    });
+
+                var prompt = _comprehensionSubsession.IsCorrectAnswer(spokenWord) ? 
+                    _prompts.Correct : 
+                    $"{_prompts.Try} {string.Format(_prompts.QuestionCorrection, _comprehensionSubsession.AnswerText)}";
+
+                _comprehensionSubsession = null;
+                SteppedInRegression?.Invoke(
+                    this,
+                    new SteppedInRegressionEventArgs
+                    {
+                        Prompt = prompt
+
+                    });
+
+                _pageTurningState.StartTurningPage();
+
+                return true;
+            }
+            else
+            {
+                var questions = _readingSession
+                    .Book
+                    .Questions
+                    .Where(q => q.Page == _view.CurrentPage.PageNumber);
+                if (questions.Any())
+                {
+                    _comprehensionSubsession = new ComprehensionSubsession(questions.First());
+                    SteppedInRegression?.Invoke(
+                        this,
+                        new SteppedInRegressionEventArgs
+                        {
+                            Prompt = _regressionSubsession.AddressNextStep(
+                                _comprehensionSubsession.QuestionText)
+                        });
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
         }
 
         public void SawNewWords(List<WordOnPage> words)

@@ -57,9 +57,11 @@
       <HintPath>..\..\..\..\..\Desktop\Xamarin.Android.OpenCV-master\src\OpenCV.Binding\bin\Debug\AnyCPU\OpenCV.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Core" />
     <Reference Include="Mono.Android" />
+    <Reference Include="System.Xml.Linq" />
     <Reference Include="Tesseract, Version=0.3.4.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\..\packages\Xamarin.Tesseract.0.3.4\lib\MonoAndroid10\Tesseract.dll</HintPath>
     </Reference>
@@ -72,6 +74,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AndroidCameraProxy.cs" />
+    <Compile Include="AndroidCloudTextToSpeechProxy.cs" />
     <Compile Include="AndroidConstants.cs" />
     <Compile Include="AndroidTextToSpeechProxy.cs" />
     <Compile Include="AndroidSpeechToTextProxy.cs" />
@@ -84,6 +87,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ImageExtensions.cs" />
     <Compile Include="TinyIoC.cs" />
+    <Compile Include="TTSClient.cs" />
   </ItemGroup>
   <ItemGroup>
     <AndroidAsset Include="Assets\tessdata\eng.traineddata" />
